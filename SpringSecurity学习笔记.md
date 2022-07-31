@@ -849,3 +849,1223 @@ public class UsernamePasswordAuthenticationFilter extends AbstractAuthentication
 
 
 
+
+
+## UserDetailsService 接口
+
+当什么也没有配置的时候，账号和密码是由 Spring Security 定义生成的。而在实际项目中 账号和密码都是从数据库中查询出来的。 所以我们要通过自定义逻辑控制认证逻辑
+
+如果需要自定义逻辑时，只需要实现 UserDetailsService 接口即可
+
+
+
+接口定义：
+
+```java
+package org.springframework.security.core.userdetails;
+
+/**
+ * Core interface which loads user-specific data.
+ * <p>
+ * It is used throughout the framework as a user DAO and is the strategy used by the
+ * {@link org.springframework.security.authentication.dao.DaoAuthenticationProvider
+ * DaoAuthenticationProvider}.
+ *
+ * <p>
+ * The interface requires only one read-only method, which simplifies support for new
+ * data-access strategies.
+ *
+ * @author Ben Alex
+ * @see org.springframework.security.authentication.dao.DaoAuthenticationProvider
+ * @see UserDetails
+ */
+public interface UserDetailsService {
+
+	/**
+	 * Locates the user based on the username. In the actual implementation, the search
+	 * may possibly be case sensitive, or case insensitive depending on how the
+	 * implementation instance is configured. In this case, the <code>UserDetails</code>
+	 * object that comes back may have a username that is of a different case than what
+	 * was actually requested..
+	 * @param username the username identifying the user whose data is required.
+	 * @return a fully populated user record (never <code>null</code>)
+	 * @throws UsernameNotFoundException if the user could not be found or the user has no
+	 * GrantedAuthority
+	 */
+	UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+
+}
+
+```
+
+
+
+
+
+返回值是UserDetails，这个类是系统默认的用户“主体”
+
+
+
+```java
+package org.springframework.security.core.userdetails;
+
+import java.io.Serializable;
+import java.util.Collection;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+
+/**
+ * Provides core user information.
+ *
+ * <p>
+ * Implementations are not used directly by Spring Security for security purposes. They
+ * simply store user information which is later encapsulated into {@link Authentication}
+ * objects. This allows non-security related user information (such as email addresses,
+ * telephone numbers etc) to be stored in a convenient location.
+ * <p>
+ * Concrete implementations must take particular care to ensure the non-null contract
+ * detailed for each method is enforced. See
+ * {@link org.springframework.security.core.userdetails.User} for a reference
+ * implementation (which you might like to extend or use in your code).
+ *
+ * @author Ben Alex
+ * @see UserDetailsService
+ * @see UserCache
+ */
+public interface UserDetails extends Serializable {
+
+   /**
+    * Returns the authorities granted to the user. Cannot return <code>null</code>.
+    * @return the authorities, sorted by natural key (never <code>null</code>)
+    */
+   Collection<? extends GrantedAuthority> getAuthorities();
+
+   /**
+    * Returns the password used to authenticate the user.
+    * @return the password
+    */
+   String getPassword();
+
+   /**
+    * Returns the username used to authenticate the user. Cannot return
+    * <code>null</code>.
+    * @return the username (never <code>null</code>)
+    */
+   String getUsername();
+
+   /**
+    * Indicates whether the user's account has expired. An expired account cannot be
+    * authenticated.
+    * @return <code>true</code> if the user's account is valid (ie non-expired),
+    * <code>false</code> if no longer valid (ie expired)
+    */
+   boolean isAccountNonExpired();
+
+   /**
+    * Indicates whether the user is locked or unlocked. A locked user cannot be
+    * authenticated.
+    * @return <code>true</code> if the user is not locked, <code>false</code> otherwise
+    */
+   boolean isAccountNonLocked();
+
+   /**
+    * Indicates whether the user's credentials (password) has expired. Expired
+    * credentials prevent authentication.
+    * @return <code>true</code> if the user's credentials are valid (ie non-expired),
+    * <code>false</code> if no longer valid (ie expired)
+    */
+   boolean isCredentialsNonExpired();
+
+   /**
+    * Indicates whether the user is enabled or disabled. A disabled user cannot be
+    * authenticated.
+    * @return <code>true</code> if the user is enabled, <code>false</code> otherwise
+    */
+   boolean isEnabled();
+
+}
+```
+
+
+
+
+
+实现类user：
+
+
+
+```java
+package org.springframework.security.core.userdetails;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Function;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.springframework.security.core.CredentialsContainer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.SpringSecurityCoreVersion;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.Assert;
+
+/**
+ * Models core user information retrieved by a {@link UserDetailsService}.
+ * <p>
+ * Developers may use this class directly, subclass it, or write their own
+ * {@link UserDetails} implementation from scratch.
+ * <p>
+ * {@code equals} and {@code hashcode} implementations are based on the {@code username}
+ * property only, as the intention is that lookups of the same user principal object (in a
+ * user registry, for example) will match where the objects represent the same user, not
+ * just when all the properties (authorities, password for example) are the same.
+ * <p>
+ * Note that this implementation is not immutable. It implements the
+ * {@code CredentialsContainer} interface, in order to allow the password to be erased
+ * after authentication. This may cause side-effects if you are storing instances
+ * in-memory and reusing them. If so, make sure you return a copy from your
+ * {@code UserDetailsService} each time it is invoked.
+ *
+ * @author Ben Alex
+ * @author Luke Taylor
+ */
+public class User implements UserDetails, CredentialsContainer {
+
+   private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+   private static final Log logger = LogFactory.getLog(User.class);
+
+   private String password;
+
+   private final String username;
+
+   private final Set<GrantedAuthority> authorities;
+
+   private final boolean accountNonExpired;
+
+   private final boolean accountNonLocked;
+
+   private final boolean credentialsNonExpired;
+
+   private final boolean enabled;
+
+   /**
+    * Calls the more complex constructor with all boolean arguments set to {@code true}.
+    */
+   public User(String username, String password, Collection<? extends GrantedAuthority> authorities) {
+      this(username, password, true, true, true, true, authorities);
+   }
+
+   /**
+    * Construct the <code>User</code> with the details required by
+    * {@link org.springframework.security.authentication.dao.DaoAuthenticationProvider}.
+    * @param username the username presented to the
+    * <code>DaoAuthenticationProvider</code>
+    * @param password the password that should be presented to the
+    * <code>DaoAuthenticationProvider</code>
+    * @param enabled set to <code>true</code> if the user is enabled
+    * @param accountNonExpired set to <code>true</code> if the account has not expired
+    * @param credentialsNonExpired set to <code>true</code> if the credentials have not
+    * expired
+    * @param accountNonLocked set to <code>true</code> if the account is not locked
+    * @param authorities the authorities that should be granted to the caller if they
+    * presented the correct username and password and the user is enabled. Not null.
+    * @throws IllegalArgumentException if a <code>null</code> value was passed either as
+    * a parameter or as an element in the <code>GrantedAuthority</code> collection
+    */
+   public User(String username, String password, boolean enabled, boolean accountNonExpired,
+         boolean credentialsNonExpired, boolean accountNonLocked,
+         Collection<? extends GrantedAuthority> authorities) {
+      Assert.isTrue(username != null && !"".equals(username) && password != null,
+            "Cannot pass null or empty values to constructor");
+      this.username = username;
+      this.password = password;
+      this.enabled = enabled;
+      this.accountNonExpired = accountNonExpired;
+      this.credentialsNonExpired = credentialsNonExpired;
+      this.accountNonLocked = accountNonLocked;
+      this.authorities = Collections.unmodifiableSet(sortAuthorities(authorities));
+   }
+
+   @Override
+   public Collection<GrantedAuthority> getAuthorities() {
+      return this.authorities;
+   }
+
+   @Override
+   public String getPassword() {
+      return this.password;
+   }
+
+   @Override
+   public String getUsername() {
+      return this.username;
+   }
+
+   @Override
+   public boolean isEnabled() {
+      return this.enabled;
+   }
+
+   @Override
+   public boolean isAccountNonExpired() {
+      return this.accountNonExpired;
+   }
+
+   @Override
+   public boolean isAccountNonLocked() {
+      return this.accountNonLocked;
+   }
+
+   @Override
+   public boolean isCredentialsNonExpired() {
+      return this.credentialsNonExpired;
+   }
+
+   @Override
+   public void eraseCredentials() {
+      this.password = null;
+   }
+
+   private static SortedSet<GrantedAuthority> sortAuthorities(Collection<? extends GrantedAuthority> authorities) {
+      Assert.notNull(authorities, "Cannot pass a null GrantedAuthority collection");
+      // Ensure array iteration order is predictable (as per
+      // UserDetails.getAuthorities() contract and SEC-717)
+      SortedSet<GrantedAuthority> sortedAuthorities = new TreeSet<>(new AuthorityComparator());
+      for (GrantedAuthority grantedAuthority : authorities) {
+         Assert.notNull(grantedAuthority, "GrantedAuthority list cannot contain any null elements");
+         sortedAuthorities.add(grantedAuthority);
+      }
+      return sortedAuthorities;
+   }
+
+   /**
+    * Returns {@code true} if the supplied object is a {@code User} instance with the
+    * same {@code username} value.
+    * <p>
+    * In other words, the objects are equal if they have the same username, representing
+    * the same principal.
+    */
+   @Override
+   public boolean equals(Object obj) {
+      if (obj instanceof User) {
+         return this.username.equals(((User) obj).username);
+      }
+      return false;
+   }
+
+   /**
+    * Returns the hashcode of the {@code username}.
+    */
+   @Override
+   public int hashCode() {
+      return this.username.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append(getClass().getName()).append(" [");
+      sb.append("Username=").append(this.username).append(", ");
+      sb.append("Password=[PROTECTED], ");
+      sb.append("Enabled=").append(this.enabled).append(", ");
+      sb.append("AccountNonExpired=").append(this.accountNonExpired).append(", ");
+      sb.append("credentialsNonExpired=").append(this.credentialsNonExpired).append(", ");
+      sb.append("AccountNonLocked=").append(this.accountNonLocked).append(", ");
+      sb.append("Granted Authorities=").append(this.authorities).append("]");
+      return sb.toString();
+   }
+
+   /**
+    * Creates a UserBuilder with a specified user name
+    * @param username the username to use
+    * @return the UserBuilder
+    */
+   public static UserBuilder withUsername(String username) {
+      return builder().username(username);
+   }
+
+   /**
+    * Creates a UserBuilder
+    * @return the UserBuilder
+    */
+   public static UserBuilder builder() {
+      return new UserBuilder();
+   }
+
+   /**
+    * <p>
+    * <b>WARNING:</b> This method is considered unsafe for production and is only
+    * intended for sample applications.
+    * </p>
+    * <p>
+    * Creates a user and automatically encodes the provided password using
+    * {@code PasswordEncoderFactories.createDelegatingPasswordEncoder()}. For example:
+    * </p>
+    *
+    * <pre>
+    * <code>
+    * UserDetails user = User.withDefaultPasswordEncoder()
+    *     .username("user")
+    *     .password("password")
+    *     .roles("USER")
+    *     .build();
+    * // outputs {bcrypt}$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
+    * System.out.println(user.getPassword());
+    * </code> </pre>
+    *
+    * This is not safe for production (it is intended for getting started experience)
+    * because the password "password" is compiled into the source code and then is
+    * included in memory at the time of creation. This means there are still ways to
+    * recover the plain text password making it unsafe. It does provide a slight
+    * improvement to using plain text passwords since the UserDetails password is
+    * securely hashed. This means if the UserDetails password is accidentally exposed,
+    * the password is securely stored.
+    *
+    * In a production setting, it is recommended to hash the password ahead of time. For
+    * example:
+    *
+    * <pre>
+    * <code>
+    * PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    * // outputs {bcrypt}$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
+    * // remember the password that is printed out and use in the next step
+    * System.out.println(encoder.encode("password"));
+    * </code> </pre>
+    *
+    * <pre>
+    * <code>
+    * UserDetails user = User.withUsername("user")
+    *     .password("{bcrypt}$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG")
+    *     .roles("USER")
+    *     .build();
+    * </code> </pre>
+    * @return a UserBuilder that automatically encodes the password with the default
+    * PasswordEncoder
+    * @deprecated Using this method is not considered safe for production, but is
+    * acceptable for demos and getting started. For production purposes, ensure the
+    * password is encoded externally. See the method Javadoc for additional details.
+    * There are no plans to remove this support. It is deprecated to indicate that this
+    * is considered insecure for production purposes.
+    */
+   @Deprecated
+   public static UserBuilder withDefaultPasswordEncoder() {
+      logger.warn("User.withDefaultPasswordEncoder() is considered unsafe for production "
+            + "and is only intended for sample applications.");
+      PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+      return builder().passwordEncoder(encoder::encode);
+   }
+
+   public static UserBuilder withUserDetails(UserDetails userDetails) {
+      // @formatter:off
+      return withUsername(userDetails.getUsername())
+            .password(userDetails.getPassword())
+            .accountExpired(!userDetails.isAccountNonExpired())
+            .accountLocked(!userDetails.isAccountNonLocked())
+            .authorities(userDetails.getAuthorities())
+            .credentialsExpired(!userDetails.isCredentialsNonExpired())
+            .disabled(!userDetails.isEnabled());
+      // @formatter:on
+   }
+
+   private static class AuthorityComparator implements Comparator<GrantedAuthority>, Serializable {
+
+      private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+      @Override
+      public int compare(GrantedAuthority g1, GrantedAuthority g2) {
+         // Neither should ever be null as each entry is checked before adding it to
+         // the set. If the authority is null, it is a custom authority and should
+         // precede others.
+         if (g2.getAuthority() == null) {
+            return -1;
+         }
+         if (g1.getAuthority() == null) {
+            return 1;
+         }
+         return g1.getAuthority().compareTo(g2.getAuthority());
+      }
+
+   }
+
+   /**
+    * Builds the user to be added. At minimum the username, password, and authorities
+    * should provided. The remaining attributes have reasonable defaults.
+    */
+   public static final class UserBuilder {
+
+      private String username;
+
+      private String password;
+
+      private List<GrantedAuthority> authorities;
+
+      private boolean accountExpired;
+
+      private boolean accountLocked;
+
+      private boolean credentialsExpired;
+
+      private boolean disabled;
+
+      private Function<String, String> passwordEncoder = (password) -> password;
+
+      /**
+       * Creates a new instance
+       */
+      private UserBuilder() {
+      }
+
+      /**
+       * Populates the username. This attribute is required.
+       * @param username the username. Cannot be null.
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder username(String username) {
+         Assert.notNull(username, "username cannot be null");
+         this.username = username;
+         return this;
+      }
+
+      /**
+       * Populates the password. This attribute is required.
+       * @param password the password. Cannot be null.
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder password(String password) {
+         Assert.notNull(password, "password cannot be null");
+         this.password = password;
+         return this;
+      }
+
+      /**
+       * Encodes the current password (if non-null) and any future passwords supplied to
+       * {@link #password(String)}.
+       * @param encoder the encoder to use
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder passwordEncoder(Function<String, String> encoder) {
+         Assert.notNull(encoder, "encoder cannot be null");
+         this.passwordEncoder = encoder;
+         return this;
+      }
+
+      /**
+       * Populates the roles. This method is a shortcut for calling
+       * {@link #authorities(String...)}, but automatically prefixes each entry with
+       * "ROLE_". This means the following:
+       *
+       * <code>
+       *     builder.roles("USER","ADMIN");
+       * </code>
+       *
+       * is equivalent to
+       *
+       * <code>
+       *     builder.authorities("ROLE_USER","ROLE_ADMIN");
+       * </code>
+       *
+       * <p>
+       * This attribute is required, but can also be populated with
+       * {@link #authorities(String...)}.
+       * </p>
+       * @param roles the roles for this user (i.e. USER, ADMIN, etc). Cannot be null,
+       * contain null values or start with "ROLE_"
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder roles(String... roles) {
+         List<GrantedAuthority> authorities = new ArrayList<>(roles.length);
+         for (String role : roles) {
+            Assert.isTrue(!role.startsWith("ROLE_"),
+                  () -> role + " cannot start with ROLE_ (it is automatically added)");
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+         }
+         return authorities(authorities);
+      }
+
+      /**
+       * Populates the authorities. This attribute is required.
+       * @param authorities the authorities for this user. Cannot be null, or contain
+       * null values
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       * @see #roles(String...)
+       */
+      public UserBuilder authorities(GrantedAuthority... authorities) {
+         return authorities(Arrays.asList(authorities));
+      }
+
+      /**
+       * Populates the authorities. This attribute is required.
+       * @param authorities the authorities for this user. Cannot be null, or contain
+       * null values
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       * @see #roles(String...)
+       */
+      public UserBuilder authorities(Collection<? extends GrantedAuthority> authorities) {
+         this.authorities = new ArrayList<>(authorities);
+         return this;
+      }
+
+      /**
+       * Populates the authorities. This attribute is required.
+       * @param authorities the authorities for this user (i.e. ROLE_USER, ROLE_ADMIN,
+       * etc). Cannot be null, or contain null values
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       * @see #roles(String...)
+       */
+      public UserBuilder authorities(String... authorities) {
+         return authorities(AuthorityUtils.createAuthorityList(authorities));
+      }
+
+      /**
+       * Defines if the account is expired or not. Default is false.
+       * @param accountExpired true if the account is expired, false otherwise
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder accountExpired(boolean accountExpired) {
+         this.accountExpired = accountExpired;
+         return this;
+      }
+
+      /**
+       * Defines if the account is locked or not. Default is false.
+       * @param accountLocked true if the account is locked, false otherwise
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder accountLocked(boolean accountLocked) {
+         this.accountLocked = accountLocked;
+         return this;
+      }
+
+      /**
+       * Defines if the credentials are expired or not. Default is false.
+       * @param credentialsExpired true if the credentials are expired, false otherwise
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder credentialsExpired(boolean credentialsExpired) {
+         this.credentialsExpired = credentialsExpired;
+         return this;
+      }
+
+      /**
+       * Defines if the account is disabled or not. Default is false.
+       * @param disabled true if the account is disabled, false otherwise
+       * @return the {@link UserBuilder} for method chaining (i.e. to populate
+       * additional attributes for this user)
+       */
+      public UserBuilder disabled(boolean disabled) {
+         this.disabled = disabled;
+         return this;
+      }
+
+      public UserDetails build() {
+         String encodedPassword = this.passwordEncoder.apply(this.password);
+         return new User(this.username, encodedPassword, !this.disabled, !this.accountExpired,
+               !this.credentialsExpired, !this.accountLocked, this.authorities);
+      }
+
+   }
+
+}
+```
+
+
+
+
+
+
+
+
+
+## PasswordEncoder 接口
+
+
+
+密码转换器
+
+
+
+encode：
+
+对原始密码进行编码。通常，一个好的编码算法应用 SHA-1 或更大的散列与 8 字节或更大的随机生成的盐相结合。
+
+
+
+matches：
+
+验证从存储中获得的编码密码与提交的原始密码在编码后是否匹配。如果密码匹配，则返回 true，否则返回 false。存储的密码本身永远不会被解码。
+参数：
+
+* rawPassword - 编码和匹配的原始密码
+* encodedPassword - 存储中要与之比较的编码密码
+
+
+
+
+
+```java
+
+package org.springframework.security.crypto.password;
+
+/**
+ * Service interface for encoding passwords.
+ *
+ * The preferred implementation is {@code BCryptPasswordEncoder}.
+ *
+ * @author Keith Donald
+ */
+public interface PasswordEncoder {
+
+   /**
+    * Encode the raw password. Generally, a good encoding algorithm applies a SHA-1 or
+    * greater hash combined with an 8-byte or greater randomly generated salt.
+    */
+   String encode(CharSequence rawPassword);
+
+   /**
+    * Verify the encoded password obtained from storage matches the submitted raw
+    * password after it too is encoded. Returns true if the passwords match, false if
+    * they do not. The stored password itself is never decoded.
+    * @param rawPassword the raw password to encode and match
+    * @param encodedPassword the encoded password from storage to compare with
+    * @return true if the raw password, after encoding, matches the encoded password from
+    * storage
+    */
+   boolean matches(CharSequence rawPassword, String encodedPassword);
+
+   /**
+    * Returns true if the encoded password should be encoded again for better security,
+    * else false. The default implementation always returns false.
+    * @param encodedPassword the encoded password to check
+    * @return true if the encoded password should be encoded again for better security,
+    * else false.
+    */
+   default boolean upgradeEncoding(String encodedPassword) {
+      return false;
+   }
+
+}
+```
+
+
+
+
+
+BCryptPasswordEncoder 是 Spring Security 官方推荐的密码解析器，平时多使用这个解析 器。 BCryptPasswordEncoder 是对 bcrypt 强散列方法的具体实现。是基于 Hash 算法实现的单 向加密。可以通过 strength 控制加密强度，默认 10
+
+
+
+![image-20220731221204943](img/SpringSecurity学习笔记/image-20220731221204943.png)
+
+
+
+
+
+```java
+
+package org.springframework.security.crypto.bcrypt;
+
+import java.security.SecureRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Implementation of PasswordEncoder that uses the BCrypt strong hashing function. Clients
+ * can optionally supply a "version" ($2a, $2b, $2y) and a "strength" (a.k.a. log rounds
+ * in BCrypt) and a SecureRandom instance. The larger the strength parameter the more work
+ * will have to be done (exponentially) to hash the passwords. The default value is 10.
+ *
+ * @author Dave Syer
+ */
+public class BCryptPasswordEncoder implements PasswordEncoder {
+
+   private Pattern BCRYPT_PATTERN = Pattern.compile("\\A\\$2(a|y|b)?\\$(\\d\\d)\\$[./0-9A-Za-z]{53}");
+
+   private final Log logger = LogFactory.getLog(getClass());
+
+   private final int strength;
+
+   private final BCryptVersion version;
+
+   private final SecureRandom random;
+
+   public BCryptPasswordEncoder() {
+      this(-1);
+   }
+
+   /**
+    * @param strength the log rounds to use, between 4 and 31
+    */
+   public BCryptPasswordEncoder(int strength) {
+      this(strength, null);
+   }
+
+   /**
+    * @param version the version of bcrypt, can be 2a,2b,2y
+    */
+   public BCryptPasswordEncoder(BCryptVersion version) {
+      this(version, null);
+   }
+
+   /**
+    * @param version the version of bcrypt, can be 2a,2b,2y
+    * @param random the secure random instance to use
+    */
+   public BCryptPasswordEncoder(BCryptVersion version, SecureRandom random) {
+      this(version, -1, random);
+   }
+
+   /**
+    * @param strength the log rounds to use, between 4 and 31
+    * @param random the secure random instance to use
+    */
+   public BCryptPasswordEncoder(int strength, SecureRandom random) {
+      this(BCryptVersion.$2A, strength, random);
+   }
+
+   /**
+    * @param version the version of bcrypt, can be 2a,2b,2y
+    * @param strength the log rounds to use, between 4 and 31
+    */
+   public BCryptPasswordEncoder(BCryptVersion version, int strength) {
+      this(version, strength, null);
+   }
+
+   /**
+    * @param version the version of bcrypt, can be 2a,2b,2y
+    * @param strength the log rounds to use, between 4 and 31
+    * @param random the secure random instance to use
+    */
+   public BCryptPasswordEncoder(BCryptVersion version, int strength, SecureRandom random) {
+      if (strength != -1 && (strength < BCrypt.MIN_LOG_ROUNDS || strength > BCrypt.MAX_LOG_ROUNDS)) {
+         throw new IllegalArgumentException("Bad strength");
+      }
+      this.version = version;
+      this.strength = (strength == -1) ? 10 : strength;
+      this.random = random;
+   }
+
+   @Override
+   public String encode(CharSequence rawPassword) {
+      if (rawPassword == null) {
+         throw new IllegalArgumentException("rawPassword cannot be null");
+      }
+      String salt = getSalt();
+      return BCrypt.hashpw(rawPassword.toString(), salt);
+   }
+
+   private String getSalt() {
+      if (this.random != null) {
+         return BCrypt.gensalt(this.version.getVersion(), this.strength, this.random);
+      }
+      return BCrypt.gensalt(this.version.getVersion(), this.strength);
+   }
+
+   @Override
+   public boolean matches(CharSequence rawPassword, String encodedPassword) {
+      if (rawPassword == null) {
+         throw new IllegalArgumentException("rawPassword cannot be null");
+      }
+      if (encodedPassword == null || encodedPassword.length() == 0) {
+         this.logger.warn("Empty encoded password");
+         return false;
+      }
+      if (!this.BCRYPT_PATTERN.matcher(encodedPassword).matches()) {
+         this.logger.warn("Encoded password does not look like BCrypt");
+         return false;
+      }
+      return BCrypt.checkpw(rawPassword.toString(), encodedPassword);
+   }
+
+   @Override
+   public boolean upgradeEncoding(String encodedPassword) {
+      if (encodedPassword == null || encodedPassword.length() == 0) {
+         this.logger.warn("Empty encoded password");
+         return false;
+      }
+      Matcher matcher = this.BCRYPT_PATTERN.matcher(encodedPassword);
+      if (!matcher.matches()) {
+         throw new IllegalArgumentException("Encoded password does not look like BCrypt: " + encodedPassword);
+      }
+      int strength = Integer.parseInt(matcher.group(2));
+      return strength < this.strength;
+   }
+
+   /**
+    * Stores the default bcrypt version for use in configuration.
+    *
+    * @author Lin Feng
+    */
+   public enum BCryptVersion {
+
+      $2A("$2a"),
+
+      $2Y("$2y"),
+
+      $2B("$2b");
+
+      private final String version;
+
+      BCryptVersion(String version) {
+         this.version = version;
+      }
+
+      public String getVersion() {
+         return this.version;
+      }
+
+   }
+
+}
+```
+
+
+
+
+
+测试
+
+
+
+```java
+package mao.springsecurity_demo;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@SpringBootTest
+class SpringSecurityDemoApplicationTests
+{
+
+    @Test
+    void contextLoads()
+    {
+    }
+
+    @Test
+    void testBCryptPasswordEncoder()
+    {
+        BCryptPasswordEncoder bCryptPasswordEncoder=new BCryptPasswordEncoder();
+        String encode = bCryptPasswordEncoder.encode("123");
+        System.out.println(encode);
+        System.out.println(encode.length());
+        System.out.println(bCryptPasswordEncoder.encode("saks"));
+        System.out.println(bCryptPasswordEncoder.encode("123456789"));
+        System.out.println(bCryptPasswordEncoder.matches("123",encode));
+        System.out.println(bCryptPasswordEncoder.matches("124",encode));
+        System.out.println(bCryptPasswordEncoder.matches("1123",encode));
+    }
+}
+
+```
+
+
+
+
+
+测试结果：
+
+```sh
+$2a$10$l2nW7ut0ThVV4fA1QeKR6eP6rPFqT.KUUNIp2LS6m3HEyeP9XAgNq
+60
+$2a$10$NXwYkEFRJ6PnF1iKT1yOiec2BjTSO2X.opMezz2hxzb06yUycCsmm
+$2a$10$qd9Cov2lEj8RmrCo7wVoZOezCWFxR8ShtrYCdMe2LpTi.OWR3eWCy
+true
+false
+false
+```
+
+
+
+第二次运行：
+
+```sh
+$2a$10$vNKzVK6cW2m2vv8vAPocwuMIBIHp6JHJZ8qzYp11PK8.U7c.4d0pS
+60
+$2a$10$yVqAF1MHyemO6vFTiZM66O/mKBzASOxl9Jh8oZ1.34GF0AQTiGli.
+$2a$10$dO3cdl5Ce7op.qm9xAce1.Uh7Mmnzq3h1abW.t1lHyEgRRwZEEKme
+true
+false
+false
+```
+
+
+
+更改代码：
+
+```java
+package mao.springsecurity_demo;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@SpringBootTest
+class SpringSecurityDemoApplicationTests
+{
+
+    @Test
+    void contextLoads()
+    {
+    }
+
+    @Test
+    void testBCryptPasswordEncoder()
+    {
+        BCryptPasswordEncoder bCryptPasswordEncoder=new BCryptPasswordEncoder();
+        String encode = bCryptPasswordEncoder.encode("123");
+        System.out.println(encode);
+        System.out.println(encode.length());
+        System.out.println(bCryptPasswordEncoder.encode("saks"));
+        System.out.println(bCryptPasswordEncoder.encode("123456789"));
+        System.out.println(bCryptPasswordEncoder.matches("123",encode));
+        System.out.println(bCryptPasswordEncoder.matches("124",encode));
+        System.out.println(bCryptPasswordEncoder.matches("1123",encode));
+        System.out.println(bCryptPasswordEncoder.matches("123","$2a$10$l2nW7ut0ThVV4fA1QeKR6eP6rPFqT.KUUNIp2LS6m3HEyeP9XAgNq"));
+    }
+}
+```
+
+
+
+运行：
+
+```sh
+$2a$10$ZHcX4sqcWKL8WcSpxcpZH.zcW0r26pBh8MrL4xUTV.0tQ3JziL1eS
+60
+$2a$10$69x/IOu3B4zFFCBHOzk64eCxeuixb.nZqlgLmiGLBcn/2vgw7gtqm
+$2a$10$pQDk9/AR.jMi5Gv6eUF/KugZMOTiUc9QqdZtQXeID.SWcTFedFsB.
+true
+false
+false
+true
+```
+
+
+
+在使用穷举法暴力破解中，md5算法生成一个密文用时在微秒级，也就是说，一个6位密码的所有组合，通过穷举只需要40秒。
+
+而使用bcrypt算法，生成一个密文用时在毫秒级，通过穷举法，需要用上好几年的时间才能列举所有可能值。
+
+在SpringSecurity 3.0版本中，可以使用md5进行加密，但到了5.0版本，官方提倡使用bcrypt，不再提供md5算法加密，如需必要，需人工导入Md5算法的工具类。
+
+
+
+
+
+
+
+
+
+# 设置登录系统的账号和密码
+
+
+
+
+
+## 方法一
+
+
+
+在配置文件里声明
+
+
+
+```yaml
+spring:
+  security:
+    user:
+      name: abc
+      password: 123456
+```
+
+
+
+
+
+```yaml
+
+#多环境开发---单文件
+spring:
+  profiles:
+    # 当前环境
+    active: dev
+
+#-----通用环境---------------------------------------------------------
+
+  # 导入jdbc.properties文件
+#  config:
+#    import: classpath:jdbc.properties
+
+
+  #spring-mvc配置
+  mvc:
+    # 视图解析器
+    view:
+      prefix:
+      suffix: .html
+
+
+
+  security:
+    user:
+      name: abc
+      password: 123456
+
+
+
+
+
+---
+#------开发环境--------------------------------------------------------
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+#  # 配置数据源
+#  datasource:
+#    # driver-class-name: ${jdbc.driver}
+#    # url: ${jdbc.url}
+#    # username: ${jdbc.username}
+#    # password: ${jdbc.password}
+#    # 配置数据源-druid
+#    druid:
+#      driver-class-name: ${jdbc.driver}
+#      url: ${jdbc.url}
+#      username: ${jdbc.username}
+#      password: ${jdbc.password}
+
+
+
+
+
+
+
+# 开启debug模式，输出调试信息，常用于检查系统运行状况
+#debug: true
+
+# 设置日志级别，root表示根节点，即整体应用日志级别
+logging:
+ # 日志输出到文件的文件名
+  file:
+     name: server.log
+  # 字符集
+  charset:
+    file: UTF-8
+  # 分文件
+  logback:
+    rollingpolicy:
+      #最大文件大小
+      max-file-size: 16KB
+      # 文件格式
+      file-name-pattern: logs/server_log-%d{yyyy/MM月/dd日/}%i.log
+  # 设置日志组
+  group:
+  # 自定义组名，设置当前组中所包含的包
+    mao_pro: mao
+  level:
+    root: info
+    # 为对应组设置日志级别
+    mao_pro: debug
+    # 日志输出格式
+# pattern:
+  # console: "%d %clr(%p) --- [%16t] %clr(%-40.40c){cyan} : %m %n"
+
+
+
+
+---
+#----生产环境----------------------------------------------------
+
+
+spring:
+  config:
+    activate:
+      on-profile: pro
+
+
+
+
+
+
+---
+#----测试环境-----------------------------------------------------
+
+spring:
+  config:
+    activate:
+      on-profile: test
+
+```
+
+
+
+
+
+访问：
+
+http://localhost:8080/
+
+
+
+![image-20220731233624443](img/SpringSecurity学习笔记/image-20220731233624443.png)
+
+
+
+![image-20220731233654893](img/SpringSecurity学习笔记/image-20220731233654893.png)
+
+
+
+
+
+![image-20220731233829873](img/SpringSecurity学习笔记/image-20220731233829873.png)
+
+
+
+认证成功
+
+
+
+
+
+
+
+## 方法二
+
+
+
+编写类实现接口
+
+
+
