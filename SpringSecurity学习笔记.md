@@ -3083,9 +3083,96 @@ public class TestController
 
 
 
-启动服务
+## 启动服务
+
+
+
+```sh
+OpenJDK 64-Bit Server VM warning: Options -Xverify:none and -noverify were deprecated in JDK 13 and will likely be removed in a future release.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.2)
+
+2022-08-01 14:58:01.438  INFO 15684 --- [           main] m.s.SpringSecurityDemoApplication        : Starting SpringSecurityDemoApplication using Java 16.0.2 on mao with PID 15684 (H:\程序\大三暑假\springSecurity_demo\target\classes started by mao in H:\程序\大三暑假\springSecurity_demo)
+2022-08-01 14:58:01.440 DEBUG 15684 --- [           main] m.s.SpringSecurityDemoApplication        : Running with Spring Boot v2.7.2, Spring v5.3.22
+2022-08-01 14:58:01.441  INFO 15684 --- [           main] m.s.SpringSecurityDemoApplication        : The following 1 profile is active: "dev"
+2022-08-01 14:58:02.318  INFO 15684 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2022-08-01 14:58:02.328  INFO 15684 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2022-08-01 14:58:02.328  INFO 15684 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.65]
+2022-08-01 14:58:02.417  INFO 15684 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2022-08-01 14:58:02.418  INFO 15684 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 944 ms
+2022-08-01 14:58:02.529  INFO 15684 --- [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2022-08-01 14:58:02.624  INFO 15684 --- [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+2022-08-01 14:58:02.730  WARN 15684 --- [           main] c.b.m.core.metadata.TableInfoHelper      : Can not find table primary key in Class: "mao.springsecurity_demo.entity.Administrators".
+2022-08-01 14:58:02.735  WARN 15684 --- [           main] c.b.m.core.injector.DefaultSqlInjector   : class mao.springsecurity_demo.entity.Administrators ,Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.
+2022-08-01 14:58:02.793  WARN 15684 --- [           main] c.b.m.core.metadata.TableInfoHelper      : Can not find table primary key in Class: "mao.springsecurity_demo.entity.AdministratorsPassword".
+2022-08-01 14:58:02.794  WARN 15684 --- [           main] c.b.m.core.injector.DefaultSqlInjector   : class mao.springsecurity_demo.entity.AdministratorsPassword ,Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.1 
+2022-08-01 14:58:03.184  INFO 15684 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@599f1b7, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@22791b75, org.springframework.security.web.context.SecurityContextPersistenceFilter@119290b9, org.springframework.security.web.header.HeaderWriterFilter@463afa6e, org.springframework.security.web.csrf.CsrfFilter@4c18516, org.springframework.security.web.authentication.logout.LogoutFilter@67b61834, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@3b0d3a63, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@615db358, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@64f4f12, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@62cbc478, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@7e61e25c, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@37d28938, org.springframework.security.web.session.SessionManagementFilter@7ccd611e, org.springframework.security.web.access.ExceptionTranslationFilter@5d194314, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@45554613]
+2022-08-01 14:58:03.241  INFO 15684 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-01 14:58:03.251  INFO 15684 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 2.196 seconds (JVM running for 2.818)
+```
 
 
 
 
+
+## 访问
+
+
+
+http://localhost:8080/test
+
+
+
+
+
+![image-20220801145915511](img/SpringSecurity学习笔记/image-20220801145915511.png)
+
+
+
+![image-20220801150016039](img/SpringSecurity学习笔记/image-20220801150016039.png)
+
+
+
+
+
+![image-20220801150025558](img/SpringSecurity学习笔记/image-20220801150025558.png)
+
+
+
+
+
+## 查看日志
+
+
+
+```sh
+2022-08-01 14:58:03.241  INFO 15684 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-01 14:58:03.251  INFO 15684 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 2.196 seconds (JVM running for 2.818)
+2022-08-01 14:59:07.053  INFO 15684 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2022-08-01 14:59:07.053  INFO 15684 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2022-08-01 14:59:07.054  INFO 15684 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2022-08-01 15:00:21.315 DEBUG 15684 --- [nio-8080-exec-5] m.s.m.A.selectList                       : ==>  Preparing: SELECT administrator_no,administrator_password FROM administrators_password WHERE (administrator_no = ?)
+2022-08-01 15:00:21.331 DEBUG 15684 --- [nio-8080-exec-5] m.s.m.A.selectList                       : ==> Parameters: 10001(Long)
+2022-08-01 15:00:21.346 DEBUG 15684 --- [nio-8080-exec-5] m.s.m.A.selectList                       : <==      Total: 1
+```
+
+
+
+
+
+
+
+
+
+# 未认证请求跳转到登录页
 
