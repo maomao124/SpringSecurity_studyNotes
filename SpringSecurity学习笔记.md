@@ -3174,5 +3174,567 @@ http://localhost:8080/test
 
 
 
-# 未认证请求跳转到登录页
+
+
+# 自定义页面
+
+
+
+## login.html
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): login
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 15:09
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <link rel="stylesheet" href="css/form.css">
+    <link rel="stylesheet" href="css/animate.css">
+    <style>
+        body {
+            background-color: skyblue;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="text_position">
+    <div class="text animated flipInY">
+        登录
+    </div>
+</div>
+
+<div class="form_position">
+    <div class="animated bounceInDown">
+        <div class="form">
+            <form action="/login"  method="post">
+                <table border="1">
+                    <tr>
+                        <td colspan="2" align="center">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">用户ID</td>
+                        <td>
+                            <label>
+                                <input class="input" type="text" name="username" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">密码</td>
+                        <td>
+                            <label>
+                                <input class="input" type="password" name="password" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input class="submit" type="submit" value="提交"/>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+
+
+</script>
+
+</html>
+```
+
+
+
+
+
+## error.html
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): error
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 15:51
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>error</title>
+    <link rel="stylesheet" href="css/error.css">
+</head>
+<body>
+
+<a class="warning" href="login.html">错误：账号或者密码不正确</a>
+
+</body>
+</html>
+```
+
+
+
+
+
+## index.html
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): index
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 18:49
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>索引</title>
+</head>
+<body>
+<h1>
+  登录成功
+</h1>
+</body>
+</html>
+```
+
+
+
+
+
+## form.css
+
+
+
+```css
+/*
+  Project name(项目名称)：springSecurity_demo 
+  File name(文件名): form
+  Author(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1 
+  Time(创建时间)： 15:11
+  Version(版本): 1.0
+  Description(描述)： 无
+ */
+
+
+/*表单位置*/
+div.form_position {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/*表单的边框*/
+div.form {
+    border: 10px skyblue dotted;
+}
+
+
+/*表*/
+table {
+    width: 600px;
+    border-collapse: collapse;
+    color: #4edaff;
+    background-color: #ffe4da;
+    transition: all 1s linear 0s;
+}
+
+table:hover {
+    background-color: #b4ffab;
+    /*width: 800px;*/
+    /*transition: all 1s linear 0s;*/
+}
+
+
+/*设置字体*/
+td, input, input.input {
+    font-size: 30px;
+}
+
+input {
+    /*font-size: 24px;*/
+    /*width: 90%;*/
+    color: coral;
+}
+
+input.input {
+    width: 85%;
+    color: coral;
+    transition: all 0.5s linear 0s;
+}
+
+input.input:hover {
+    width: 98%;
+    transition: all 0.5s linear 0s;
+    background-color: #fcffee;
+}
+
+
+/*设置提示*/
+.prompt {
+    text-align: center;
+    width: 200px;
+    transition: all 1s linear 0.2s;
+}
+
+.prompt:hover {
+    transition: all 1s linear 0.2s;
+    color: #ff2e2f;
+}
+
+/*提交按钮*/
+input.submit {
+    color: #6739ff;
+}
+
+input.submit:hover {
+
+}
+
+/*最上面的字*/
+div.text {
+    border: 10px violet dotted;
+    text-align: center;
+    font-size: 32px;
+    color: tomato;
+    background: bisque;
+}
+
+/*最上面的字的位置*/
+div.text_position {
+    position: absolute;
+    top: 2%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+}
+```
+
+
+
+
+
+## error.css
+
+
+
+```css
+/*
+  Project name(项目名称)：springSecurity_demo 
+  File name(文件名): error
+  Author(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1 
+  Time(创建时间)： 15:52
+  Version(版本): 1.0
+  Description(描述)： 无
+ */
+
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(20%, 20%, 20%);
+}
+
+a {
+    text-decoration: none;
+}
+
+.warning {
+    color: whitesmoke;
+    font-size: 80px;
+    font-family: sans-serif;
+    font-weight: bold;
+    position: relative;
+    padding: 0.6em 0.4em;
+}
+
+.warning::before,
+.warning::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0.2em solid transparent;
+    box-sizing: border-box;
+    color: orangered;
+    animation: rotating 10s infinite;
+}
+
+.warning::before {
+    border-top-color: currentColor;
+    border-right-color: currentColor;
+    z-index: -1;
+}
+
+.warning::after {
+    border-bottom-color: currentColor;
+    border-left-color: currentColor;
+    box-shadow: 0.3em 0.3em 0.3em rgba(20%, 20%, 20%, 0.8);
+}
+
+@keyframes rotating {
+    to {
+        transform: rotate(360deg);
+    }
+}
+```
+
+
+
+
+
+## animate.css
+
+
+
+过多，略
+
+
+
+![image-20220801191200469](img/SpringSecurity学习笔记/image-20220801191200469.png)
+
+
+
+
+
+
+
+
+
+## 更改SecurityConfig类
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html",
+                        "/css/**", "/js/**", "/img/**", "/test/noauth")
+                .permitAll()
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+
+```
+
+
+
+
+
+
+
+## 启动服务
+
+
+
+```sh
+OpenJDK 64-Bit Server VM warning: Options -Xverify:none and -noverify were deprecated in JDK 13 and will likely be removed in a future release.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.2)
+
+2022-08-01 19:15:20.395  INFO 3744 --- [           main] m.s.SpringSecurityDemoApplication        : Starting SpringSecurityDemoApplication using Java 16.0.2 on mao with PID 3744 (H:\程序\大三暑假\springSecurity_demo\target\classes started by mao in H:\程序\大三暑假\springSecurity_demo)
+2022-08-01 19:15:20.398 DEBUG 3744 --- [           main] m.s.SpringSecurityDemoApplication        : Running with Spring Boot v2.7.2, Spring v5.3.22
+2022-08-01 19:15:20.398  INFO 3744 --- [           main] m.s.SpringSecurityDemoApplication        : The following 1 profile is active: "dev"
+2022-08-01 19:15:21.189  INFO 3744 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2022-08-01 19:15:21.196  INFO 3744 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2022-08-01 19:15:21.196  INFO 3744 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.65]
+2022-08-01 19:15:21.280  INFO 3744 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2022-08-01 19:15:21.280  INFO 3744 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 851 ms
+2022-08-01 19:15:21.375  INFO 3744 --- [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2022-08-01 19:15:21.468  INFO 3744 --- [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.1 
+2022-08-01 19:15:21.807  INFO 3744 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2022-08-01 19:15:21.975  INFO 3744 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@272778ae, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@2cccf134, org.springframework.security.web.context.SecurityContextPersistenceFilter@28d739f1, org.springframework.security.web.header.HeaderWriterFilter@212fafd1, org.springframework.security.web.authentication.logout.LogoutFilter@10d18696, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@6b8b5020, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7e3d2ebd, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@51888019, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@3c18942, org.springframework.security.web.session.SessionManagementFilter@787988f4, org.springframework.security.web.access.ExceptionTranslationFilter@7d59e968, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@4652c74d]
+2022-08-01 19:15:22.025  INFO 3744 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-01 19:15:22.035  INFO 3744 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 1.958 seconds (JVM running for 2.435)
+```
+
+
+
+
+
+## 访问
+
+
+
+http://localhost:8080/test/noauth
+
+
+
+![image-20220801191650119](img/SpringSecurity学习笔记/image-20220801191650119.png)
+
+
+
+无需登录就能访问
+
+
+
+http://localhost:8080
+
+
+
+![image-20220801191758820](img/SpringSecurity学习笔记/image-20220801191758820.png)
+
+
+
+
+
+需要登录
+
+
+
+![image-20220801191846791](img/SpringSecurity学习笔记/image-20220801191846791.png)
+
+
+
+
+
+![image-20220801191900133](img/SpringSecurity学习笔记/image-20220801191900133.png)
+
+
+
+登录失败，跳转到错误页面
+
+
+
+![image-20220801191947552](img/SpringSecurity学习笔记/image-20220801191947552.png)
+
+
+
+
+
+![image-20220801191957331](img/SpringSecurity学习笔记/image-20220801191957331.png)
+
+
+
+
+
+登录成功
+
+
+
+
+
+
+
+# 基于角色或权限进行访问控制
 
