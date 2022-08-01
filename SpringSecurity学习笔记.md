@@ -4857,5 +4857,868 @@ http://localhost:8080/test/rootOrAdmin
 
 
 
+如果用户具备给定角色就允许访问
+
+
+
+给/test/role_root资源添加角色root
+
+
+
+### 更改TestController类
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:52
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+@RequestMapping("/test")
+public class TestController
+{
+    @GetMapping("")
+    public String success()
+    {
+        return "success";
+    }
+
+    @GetMapping("/noauth")
+    public String noAuth()
+    {
+        return "noAuth";
+    }
+
+    @GetMapping("/root")
+    public String root()
+    {
+        return "root权限，访问成功";
+    }
+
+    @GetMapping("/admin")
+    public String admin()
+    {
+        return "admin权限，访问成功";
+    }
+
+    @GetMapping("/rootOrAdmin")
+    public String rootOrAdmin()
+    {
+        return "admin或者root权限，访问成功";
+    }
+
+    @GetMapping("/role_root")
+    public String role_root()
+    {
+        return "具有role_root角色，访问成功";
+    }
+
+}
+```
+
+
+
+
+
+
+
+### 更改SecurityConfig类
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html",
+                        "/css/**", "/js/**", "/img/**", "/test/noauth")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+
+
+### 重启服务
+
+
+
+
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root
+
+
+
+![image-20220801212434654](img/SpringSecurity学习笔记/image-20220801212434654.png)
+
+
+
+没有权限
+
+
+
+
+
+
+
+### 更改用户权限
+
+
+
+授予root角色
+
+
+
+在service中，必须添加ROLE_前缀
+
+
+
+```java
+package mao.springsecurity_demo.service;
+
+import mao.springsecurity_demo.entity.AdministratorsPassword;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.service
+ * Class(类名): AdministratorsLoginService
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/1
+ * Time(创建时间)： 14:23
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Service
+public class AdministratorsLoginService implements UserDetailsService
+{
+
+    private static final Logger log = LoggerFactory.getLogger(AdministratorsLoginService.class);
+
+
+    @Autowired
+    private IAdministratorsPasswordService administratorsPasswordService;
+
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
+    {
+        log.debug("进入AdministratorsLoginService");
+
+        //判空
+        if (username == null || username.equals(""))
+        {
+            throw new UsernameNotFoundException("用户名不能为空！");
+        }
+        Long id = null;
+        try
+        {
+            id = Long.parseLong(username);
+        }
+        catch (Exception e)
+        {
+            throw new UsernameNotFoundException("用户名必须为数字！");
+        }
+        //查数据库
+        AdministratorsPassword administratorsPassword = administratorsPasswordService.query().eq("administrator_no", id).one();
+        //判断是否存在
+        if (administratorsPassword == null || administratorsPassword.getAdministratorNo() == null)
+        {
+            throw new UsernameNotFoundException("用户名不存在！");
+        }
+        //将数据放入user对象里并返回
+        return new User(administratorsPassword.getAdministratorNo().toString(),
+                administratorsPassword.getAdministratorPassword(),
+                //AuthorityUtils.createAuthorityList("administrator"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("root","admin"));
+                AuthorityUtils.createAuthorityList("admin","ROLE_root"));
+    }
+}
+```
+
+
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root
+
+
+
+![image-20220801212945720](img/SpringSecurity学习笔记/image-20220801212945720.png)
+
+
+
+正常访问
+
+
+
+
+
+
+
+
+
+## hasAnyRole
+
+
+
+表示用户具备任何一个角色都可以访问
+
+
+
+给/role_root_or_admin资源设置root和admin角色
+
+
+
+
+
+### 更改TestController类
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:52
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+@RequestMapping("/test")
+public class TestController
+{
+    @GetMapping("")
+    public String success()
+    {
+        return "success";
+    }
+
+    @GetMapping("/noauth")
+    public String noAuth()
+    {
+        return "noAuth";
+    }
+
+    @GetMapping("/root")
+    public String root()
+    {
+        return "root权限，访问成功";
+    }
+
+    @GetMapping("/admin")
+    public String admin()
+    {
+        return "admin权限，访问成功";
+    }
+
+    @GetMapping("/rootOrAdmin")
+    public String rootOrAdmin()
+    {
+        return "admin或者root权限，访问成功";
+    }
+
+    @GetMapping("/role_root")
+    public String role_root()
+    {
+        return "具有role_root角色，访问成功";
+    }
+
+    @GetMapping("/role_root_or_admin")
+    public String role_root_or_admin()
+    {
+        return "具有root或者admin角色，访问成功";
+    }
+
+}
+```
+
+
+
+
+
+### 更改SecurityConfig类
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html",
+                        "/css/**", "/js/**", "/img/**", "/test/noauth")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root_or_admin
+
+
+
+![image-20220801213535126](img/SpringSecurity学习笔记/image-20220801213535126.png)
+
+
+
+
+
+正常访问
+
+
+
+
+
+### 更改用户权限
+
+
+
+```java
+package mao.springsecurity_demo.service;
+
+import mao.springsecurity_demo.entity.AdministratorsPassword;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.service
+ * Class(类名): AdministratorsLoginService
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/1
+ * Time(创建时间)： 14:23
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Service
+public class AdministratorsLoginService implements UserDetailsService
+{
+
+    private static final Logger log = LoggerFactory.getLogger(AdministratorsLoginService.class);
+
+
+    @Autowired
+    private IAdministratorsPasswordService administratorsPasswordService;
+
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
+    {
+        log.debug("进入AdministratorsLoginService");
+
+        //判空
+        if (username == null || username.equals(""))
+        {
+            throw new UsernameNotFoundException("用户名不能为空！");
+        }
+        Long id = null;
+        try
+        {
+            id = Long.parseLong(username);
+        }
+        catch (Exception e)
+        {
+            throw new UsernameNotFoundException("用户名必须为数字！");
+        }
+        //查数据库
+        AdministratorsPassword administratorsPassword = administratorsPasswordService.query().eq("administrator_no", id).one();
+        //判断是否存在
+        if (administratorsPassword == null || administratorsPassword.getAdministratorNo() == null)
+        {
+            throw new UsernameNotFoundException("用户名不存在！");
+        }
+        //将数据放入user对象里并返回
+        return new User(administratorsPassword.getAdministratorNo().toString(),
+                administratorsPassword.getAdministratorPassword(),
+                //AuthorityUtils.createAuthorityList("administrator"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("root","admin"));
+                //AuthorityUtils.createAuthorityList("admin", "ROLE_root"));
+                AuthorityUtils.createAuthorityList("admin", "ROLE_admin"));
+    }
+}
+```
+
+
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root_or_admin
+
+
+
+![image-20220801213731693](img/SpringSecurity学习笔记/image-20220801213731693.png)
+
+
+
+
+
+正常访问
+
+
+
+
+
+### 更改用户权限
+
+
+
+角色为ROLE_admin1
+
+
+
+```java
+package mao.springsecurity_demo.service;
+
+import mao.springsecurity_demo.entity.AdministratorsPassword;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.service
+ * Class(类名): AdministratorsLoginService
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/1
+ * Time(创建时间)： 14:23
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Service
+public class AdministratorsLoginService implements UserDetailsService
+{
+
+    private static final Logger log = LoggerFactory.getLogger(AdministratorsLoginService.class);
+
+
+    @Autowired
+    private IAdministratorsPasswordService administratorsPasswordService;
+
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
+    {
+        log.debug("进入AdministratorsLoginService");
+
+        //判空
+        if (username == null || username.equals(""))
+        {
+            throw new UsernameNotFoundException("用户名不能为空！");
+        }
+        Long id = null;
+        try
+        {
+            id = Long.parseLong(username);
+        }
+        catch (Exception e)
+        {
+            throw new UsernameNotFoundException("用户名必须为数字！");
+        }
+        //查数据库
+        AdministratorsPassword administratorsPassword = administratorsPasswordService.query().eq("administrator_no", id).one();
+        //判断是否存在
+        if (administratorsPassword == null || administratorsPassword.getAdministratorNo() == null)
+        {
+            throw new UsernameNotFoundException("用户名不存在！");
+        }
+        //将数据放入user对象里并返回
+        return new User(administratorsPassword.getAdministratorNo().toString(),
+                administratorsPassword.getAdministratorPassword(),
+                //AuthorityUtils.createAuthorityList("administrator"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("root","admin"));
+                //AuthorityUtils.createAuthorityList("admin", "ROLE_root"));
+                AuthorityUtils.createAuthorityList("admin", "ROLE_admin1"));
+    }
+}
+```
+
+
+
+
+
+### 重启访问
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root_or_admin
+
+
+
+![image-20220801213907304](img/SpringSecurity学习笔记/image-20220801213907304.png)
+
+
+
+
+
+
+
+无权限访问
+
+
+
+
+
+### 更改用户权限
+
+
+
+同时具备root和admin权限
+
+
+
+```java
+package mao.springsecurity_demo.service;
+
+import mao.springsecurity_demo.entity.AdministratorsPassword;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.service
+ * Class(类名): AdministratorsLoginService
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/1
+ * Time(创建时间)： 14:23
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Service
+public class AdministratorsLoginService implements UserDetailsService
+{
+
+    private static final Logger log = LoggerFactory.getLogger(AdministratorsLoginService.class);
+
+
+    @Autowired
+    private IAdministratorsPasswordService administratorsPasswordService;
+
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
+    {
+        log.debug("进入AdministratorsLoginService");
+
+        //判空
+        if (username == null || username.equals(""))
+        {
+            throw new UsernameNotFoundException("用户名不能为空！");
+        }
+        Long id = null;
+        try
+        {
+            id = Long.parseLong(username);
+        }
+        catch (Exception e)
+        {
+            throw new UsernameNotFoundException("用户名必须为数字！");
+        }
+        //查数据库
+        AdministratorsPassword administratorsPassword = administratorsPasswordService.query().eq("administrator_no", id).one();
+        //判断是否存在
+        if (administratorsPassword == null || administratorsPassword.getAdministratorNo() == null)
+        {
+            throw new UsernameNotFoundException("用户名不存在！");
+        }
+        //将数据放入user对象里并返回
+        return new User(administratorsPassword.getAdministratorNo().toString(),
+                administratorsPassword.getAdministratorPassword(),
+                //AuthorityUtils.createAuthorityList("administrator"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("admin"));
+                //AuthorityUtils.createAuthorityList("root","admin"));
+                //AuthorityUtils.createAuthorityList("admin", "ROLE_root"));
+                //AuthorityUtils.createAuthorityList("admin", "ROLE_admin1"));
+                AuthorityUtils.createAuthorityList("admin", "ROLE_admin", "ROLE_root"));
+    }
+}
+```
+
+
+
+
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+
+
+http://localhost:8080/test/role_root_or_admin
+
+
+
+![image-20220801214114066](img/SpringSecurity学习笔记/image-20220801214114066.png)
+
+
+
+
+
+正常访问
+
+
+
+
+
+
+
+
+
+
+
+# 自定义 403 页面
+
 
 
