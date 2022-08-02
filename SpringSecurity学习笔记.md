@@ -6517,3 +6517,735 @@ public class TestAnnotationController
 
 ## @PreAuthorize
 
+
+
+用于进入方法前的权限验证
+
+
+
+
+
+### 更改controller
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestAnnotationController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/2
+ * Time(创建时间)： 13:55
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+
+@RestController
+@RequestMapping("/test")
+public class TestAnnotationController
+{
+    /**
+     * Role root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root"})
+    @GetMapping("/anno/root")
+    public String role_root()
+    {
+        return "注解测试，当前需要root角色，访问成功";
+    }
+
+    /**
+     * Role root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root1"})
+    @GetMapping("/anno/root1")
+    public String role_root1()
+    {
+        return "注解测试，当前需要root1角色，访问成功";
+    }
+
+    /**
+     * Role admin string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin"})
+    @GetMapping("/anno/admin")
+    public String role_admin()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1"})
+    @GetMapping("/anno/admin1")
+    public String role_admin1()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin or root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root"})
+    @GetMapping("/anno/admin_or_root")
+    public String role_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root角色，访问成功";
+    }
+
+    /**
+     * Role admin or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root1"})
+    @GetMapping("/anno/admin_or_root1")
+    public String role_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1", "ROLE_root1"})
+    @GetMapping("/anno/admin1_or_root1")
+    public String role_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1角色，访问成功";
+    }
+
+    //--------------------------------------------
+
+    /**
+     * Authority root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root')")
+    @GetMapping("/anno2/root")
+    public String authority_root()
+    {
+        return "注解测试，当前需要root权限，访问成功";
+    }
+
+    /**
+     * Authority root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root1')")
+    @GetMapping("/anno2/root1")
+    public String authority_root1()
+    {
+        return "注解测试，当前需要root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin')")
+    @GetMapping("/anno2/admin")
+    public String authority_admin()
+    {
+        return "注解测试，当前需要admin权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1')")
+    @GetMapping("/anno2/admin1")
+    public String authority_admin1()
+    {
+        return "注解测试，当前需要admin1权限，访问成功";
+    }
+
+    /**
+     * Authority admin or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root')")
+    @GetMapping("/anno2/admin_or_root")
+    public String authority_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root权限，访问成功";
+    }
+
+
+    /**
+     * Authority admin or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root1')")
+    @GetMapping("/anno2/admin_or_root1")
+    public String authority_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root')")
+    @GetMapping("/anno2/admin1_or_root")
+    public String authority_admin1_or_root()
+    {
+        return "注解测试，当前需要admin1或者root权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root1')")
+    @GetMapping("/anno2/admin1_or_root1")
+    public String authority_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1权限，访问成功";
+    }
+
+}
+```
+
+
+
+
+
+当前用于具有admin一个权限
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+
+
+访问http://localhost:8080/test/anno2/root
+
+
+
+![image-20220802214532954](img/SpringSecurity学习笔记/image-20220802214532954.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/roo1
+
+
+
+![image-20220802214548978](img/SpringSecurity学习笔记/image-20220802214548978.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin
+
+
+
+![image-20220802214615250](img/SpringSecurity学习笔记/image-20220802214615250.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin1
+
+
+
+![image-20220802214632336](img/SpringSecurity学习笔记/image-20220802214632336.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin_or_root
+
+
+
+![image-20220802214659000](img/SpringSecurity学习笔记/image-20220802214659000.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin_or_root1
+
+
+
+![image-20220802214714858](img/SpringSecurity学习笔记/image-20220802214714858.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin1_or_root
+
+
+
+![image-20220802214743061](img/SpringSecurity学习笔记/image-20220802214743061.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno2/admin1_or_root1
+
+
+
+![image-20220802214834150](img/SpringSecurity学习笔记/image-20220802214834150.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+## @PostAuthorize
+
+
+
+用于在方法执行后再进行权限验证，适合验证带有返回值 的权限
+
+
+
+
+
+
+
+### 更改controller
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestAnnotationController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/2
+ * Time(创建时间)： 13:55
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+
+@RestController
+@RequestMapping("/test")
+public class TestAnnotationController
+{
+
+    private static final Logger log = LoggerFactory.getLogger(TestAnnotationController.class);
+
+    /**
+     * Role root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root"})
+    @GetMapping("/anno/root")
+    public String role_root()
+    {
+        return "注解测试，当前需要root角色，访问成功";
+    }
+
+    /**
+     * Role root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root1"})
+    @GetMapping("/anno/root1")
+    public String role_root1()
+    {
+        return "注解测试，当前需要root1角色，访问成功";
+    }
+
+    /**
+     * Role admin string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin"})
+    @GetMapping("/anno/admin")
+    public String role_admin()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1"})
+    @GetMapping("/anno/admin1")
+    public String role_admin1()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin or root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root"})
+    @GetMapping("/anno/admin_or_root")
+    public String role_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root角色，访问成功";
+    }
+
+    /**
+     * Role admin or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root1"})
+    @GetMapping("/anno/admin_or_root1")
+    public String role_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1", "ROLE_root1"})
+    @GetMapping("/anno/admin1_or_root1")
+    public String role_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1角色，访问成功";
+    }
+
+    //--------------------------------------------
+
+    /**
+     * Authority root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root')")
+    @GetMapping("/anno2/root")
+    public String authority_root()
+    {
+        return "注解测试，当前需要root权限，访问成功";
+    }
+
+    /**
+     * Authority root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root1')")
+    @GetMapping("/anno2/root1")
+    public String authority_root1()
+    {
+        return "注解测试，当前需要root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin')")
+    @GetMapping("/anno2/admin")
+    public String authority_admin()
+    {
+        return "注解测试，当前需要admin权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1')")
+    @GetMapping("/anno2/admin1")
+    public String authority_admin1()
+    {
+        return "注解测试，当前需要admin1权限，访问成功";
+    }
+
+    /**
+     * Authority admin or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root')")
+    @GetMapping("/anno2/admin_or_root")
+    public String authority_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root权限，访问成功";
+    }
+
+
+    /**
+     * Authority admin or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root1')")
+    @GetMapping("/anno2/admin_or_root1")
+    public String authority_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root')")
+    @GetMapping("/anno2/admin1_or_root")
+    public String authority_admin1_or_root()
+    {
+        return "注解测试，当前需要admin1或者root权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root1')")
+    @GetMapping("/anno2/admin1_or_root1")
+    public String authority_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1权限，访问成功";
+    }
+
+
+    //----------------------------------------
+
+    /**
+     * Authority 2 root string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('root')")
+    @GetMapping("/anno3/root")
+    public String authority2_root()
+    {
+        log.info("PostAuthorize注解测试，当前需要root权限");
+        return "PostAuthorize注解测试，当前需要root权限，访问成功";
+    }
+
+    /**
+     * Authority 2 root 1 string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('root1')")
+    @GetMapping("/anno3/root1")
+    public String authority2_root1()
+    {
+        log.info("PostAuthorize注解测试，当前需要root1权限");
+        return "PostAuthorize注解测试，当前需要root1权限，访问成功";
+    }
+
+    /**
+     * Authority 2 admin string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('admin')")
+    @GetMapping("/anno3/admin")
+    public String authority2_admin()
+    {
+        log.info("PostAuthorize注解测试，当前需要admin权限");
+        return "PostAuthorize注解测试，当前需要admin权限，访问成功";
+    }
+
+    /**
+     * Authority 2 admin 1 string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('admin1')")
+    @GetMapping("/anno3/admin1")
+    public String authority2_admin1()
+    {
+        log.info("PostAuthorize注解测试，当前需要admin1权限");
+        return "PostAuthorize注解测试，当前需要admin1权限，访问成功";
+    }
+
+}
+```
+
+
+
+
+
+
+
+### 重启服务
+
+
+
+
+
+### 访问
+
+
+
+访问http://localhost:8080/test/anno3/root
+
+
+
+![image-20220802215817605](img/SpringSecurity学习笔记/image-20220802215817605.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno3/root1
+
+
+
+![image-20220802215836349](img/SpringSecurity学习笔记/image-20220802215836349.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno3/admin
+
+
+
+![image-20220802215853850](img/SpringSecurity学习笔记/image-20220802215853850.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno3/admin1
+
+
+
+![image-20220802215918317](img/SpringSecurity学习笔记/image-20220802215918317.png)
+
+
+
+
+
+
+
+### 查看日志
+
+
+
+```sh
+2022-08-02 21:57:06.796  INFO 14508 --- [           main] m.s.SpringSecurityDemoApplication        : Starting SpringSecurityDemoApplication using Java 16.0.2 on mao with PID 14508 (H:\程序\大三暑假\springSecurity_demo\target\classes started by mao in H:\程序\大三暑假\springSecurity_demo)
+2022-08-02 21:57:06.799 DEBUG 14508 --- [           main] m.s.SpringSecurityDemoApplication        : Running with Spring Boot v2.7.2, Spring v5.3.22
+2022-08-02 21:57:06.799  INFO 14508 --- [           main] m.s.SpringSecurityDemoApplication        : The following 1 profile is active: "dev"
+2022-08-02 21:57:07.657  INFO 14508 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2022-08-02 21:57:07.664  INFO 14508 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2022-08-02 21:57:07.664  INFO 14508 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.65]
+2022-08-02 21:57:07.759  INFO 14508 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2022-08-02 21:57:07.759  INFO 14508 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 925 ms
+2022-08-02 21:57:07.906  INFO 14508 --- [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2022-08-02 21:57:07.994  INFO 14508 --- [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.1 
+2022-08-02 21:57:08.398  INFO 14508 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2022-08-02 21:57:08.640  INFO 14508 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@76e4212, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@23121d14, org.springframework.security.web.context.SecurityContextPersistenceFilter@1c7f9861, org.springframework.security.web.header.HeaderWriterFilter@7d50f2a8, org.springframework.security.web.authentication.logout.LogoutFilter@9b2dc56, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@621f23ac, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@154b8cb6, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@39449465, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@72af90e8, org.springframework.security.web.session.SessionManagementFilter@37ca3ca8, org.springframework.security.web.access.ExceptionTranslationFilter@307cf964, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@79add732]
+2022-08-02 21:57:08.698  INFO 14508 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-02 21:57:08.712  INFO 14508 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 2.248 seconds (JVM running for 2.73)
+2022-08-02 21:57:16.735  INFO 14508 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2022-08-02 21:57:16.735  INFO 14508 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2022-08-02 21:57:16.736  INFO 14508 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2022-08-02 21:57:20.705 DEBUG 14508 --- [nio-8080-exec-4] m.s.service.AdministratorsLoginService   : 进入AdministratorsLoginService
+2022-08-02 21:57:20.952 DEBUG 14508 --- [nio-8080-exec-4] m.s.m.A.selectList                       : ==>  Preparing: SELECT administrator_no,administrator_password FROM administrators_password WHERE (administrator_no = ?)
+2022-08-02 21:57:20.969 DEBUG 14508 --- [nio-8080-exec-4] m.s.m.A.selectList                       : ==> Parameters: 10001(Long)
+2022-08-02 21:57:20.984 DEBUG 14508 --- [nio-8080-exec-4] m.s.m.A.selectList                       : <==      Total: 1
+2022-08-02 21:57:35.557  INFO 14508 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : PostAuthorize注解测试，当前需要root权限
+2022-08-02 21:58:30.529  INFO 14508 --- [nio-8080-exec-2] m.s.controller.TestAnnotationController  : PostAuthorize注解测试，当前需要root1权限
+2022-08-02 21:58:48.710  INFO 14508 --- [nio-8080-exec-6] m.s.controller.TestAnnotationController  : PostAuthorize注解测试，当前需要admin权限
+2022-08-02 21:59:02.441  INFO 14508 --- [nio-8080-exec-7] m.s.controller.TestAnnotationController  : PostAuthorize注解测试，当前需要admin1权限
+```
+
+
+
+
+
+
+
+
+
+## @PostFilter
+
+
+
+权限验证之后对数据进行过滤
+
+Filter target must be a collection, array, map or stream type
+
+
+
