@@ -6283,3 +6283,237 @@ http://localhost:8080/test/admin
 
 
 
+
+
+## 开启注解功能
+
+
+
+在启动类上加上：
+
+```java
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+```
+
+
+
+```java
+package mao.springsecurity_demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+
+@SpringBootApplication
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+public class SpringSecurityDemoApplication
+{
+
+    public static void main(String[] args)
+    {
+        SpringApplication.run(SpringSecurityDemoApplication.class, args);
+    }
+
+}
+```
+
+
+
+
+
+
+
+## @Secured
+
+
+
+判断是否具有某个角色，需要注意的是这里匹配的字符串需要添加前缀“ROLE_“
+
+
+
+### 添加一个controller
+
+
+
+TestAnnotationController
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestAnnotationController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/2
+ * Time(创建时间)： 13:55
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+@RequestMapping("/test")
+public class TestAnnotationController
+{
+    @Secured({"ROLE_root"})
+    @GetMapping("/anno/root")
+    public String role_root()
+    {
+        return "注解测试，当前需要root角色，访问成功";
+    }
+
+    @Secured({"ROLE_root1"})
+    @GetMapping("/anno/root1")
+    public String role_root1()
+    {
+        return "注解测试，当前需要root1角色，访问成功";
+    }
+
+    @Secured({"ROLE_admin"})
+    @GetMapping("/anno/admin")
+    public String role_admin()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    @Secured({"ROLE_admin1"})
+    @GetMapping("/anno/admin1")
+    public String role_admin1()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    @Secured({"ROLE_admin", "ROLE_root"})
+    @GetMapping("/anno/admin_or_root")
+    public String role_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root角色，访问成功";
+    }
+
+    @Secured({"ROLE_admin", "ROLE_root1"})
+    @GetMapping("/anno/admin_or_root1")
+    public String role_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1角色，访问成功";
+    }
+
+    @Secured({"ROLE_admin1", "ROLE_root1"})
+    @GetMapping("/anno/admin1_or_root1")
+    public String role_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1角色，访问成功";
+    }
+}
+```
+
+
+
+
+
+当前用户都具有admin和root角色
+
+
+
+
+
+### 重启服务
+
+
+
+
+
+### 访问
+
+
+
+访问http://localhost:8080/test/anno/root
+
+
+
+
+
+![image-20220802140952605](img/SpringSecurity学习笔记/image-20220802140952605.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno/root1
+
+
+
+![image-20220802141016521](img/SpringSecurity学习笔记/image-20220802141016521.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno/admin
+
+
+
+![image-20220802141038418](img/SpringSecurity学习笔记/image-20220802141038418.png)
+
+
+
+访问http://localhost:8080/test/anno/admin1
+
+
+
+
+
+![image-20220802141108175](img/SpringSecurity学习笔记/image-20220802141108175.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno/admin_or_root
+
+
+
+![image-20220802141155225](img/SpringSecurity学习笔记/image-20220802141155225.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno/admin_or_root1
+
+
+
+![image-20220802141226433](img/SpringSecurity学习笔记/image-20220802141226433.png)
+
+
+
+
+
+访问http://localhost:8080/test/anno/admin1_or_root1
+
+
+
+
+
+![image-20220802141247920](img/SpringSecurity学习笔记/image-20220802141247920.png)
+
+
+
+
+
+
+
+
+
+
+
+## @PreAuthorize
+
