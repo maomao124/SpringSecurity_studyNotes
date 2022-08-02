@@ -5722,3 +5722,564 @@ http://localhost:8080/test/role_root_or_admin
 
 
 
+## 更改SecurityConfig类
+
+配置异常处理
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html",
+                        "/css/**", "/js/**", "/img/**", "/test/noauth")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+## 添加页面
+
+
+
+unAuth.html
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): unAuth
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 21:59
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>无权限访问</title>
+    <link rel="stylesheet" href="/css/error.css">
+    <link rel="stylesheet" href="/css/animate.css">
+</head>
+<body>
+
+<div class="animated fadeInDown">
+    <div class="warning" href="login.html" onclick="back()">您无权限访问此页面，点击返回</div>
+</div>
+
+</body>
+
+<script>
+
+    function back()
+    {
+        window.history.back()
+    }
+
+</script>
+</html>
+```
+
+
+
+
+
+
+
+## 重启服务
+
+
+
+
+
+## 访问
+
+
+
+![image-20220802130031705](img/SpringSecurity学习笔记/image-20220802130031705.png)
+
+
+
+
+
+访问http://localhost:8080/test/root页面
+
+
+
+![image-20220802130111140](img/SpringSecurity学习笔记/image-20220802130111140.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 用户注销
+
+
+
+## 更改索引页面
+
+在索引页面添加一个退出连接
+
+
+
+```java
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): index
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 18:49
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>索引</title>
+    <style>
+        .logout {
+            position: absolute;
+            top: 1%;
+            right: 0.5%;
+            text-decoration: none;
+            font-size: 2em;
+            transition: all 1s linear 0s;
+            color: royalblue;
+        }
+
+        .logout:hover {
+            transition: all 1s linear 0s;
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>
+    登录成功
+</h1>
+
+<a class="logout" href="/logout">退出登录</a>
+
+</body>
+</html>
+```
+
+
+
+
+
+
+
+## 添加退出成功页面
+
+
+
+thanks.html
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): thanks
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/2
+  Time(创建时间)： 13:27
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>感谢使用</title>
+    <link rel="stylesheet" href="/css/thanks.css">
+</head>
+<body>
+
+<div>
+    <div class="thanks">
+        <a href="/login.html" class="sign">感谢使用</a>
+        <!--<div class="sign">感谢</div>-->
+        <div class="strings"></div>
+        <div class="pin top"></div>
+        <div class="pin left"></div>
+        <div class="pin right"></div>
+    </div>
+</div>
+
+</body>
+</html>
+```
+
+
+
+
+
+
+
+thanks.css
+
+```css
+/*
+  Project name(项目名称)：springSecurity_demo 
+  File name(文件名): thanks
+  Author(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/2 
+  Time(创建时间)： 13:27
+  Version(版本): 1.0
+  Description(描述)： 无
+ */
+
+
+html, body {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center 60%, white, sandybrown);
+}
+
+a {
+    text-decoration: none;
+}
+
+.thanks {
+    width: 400px;
+    height: 300px;
+    position: relative;
+    animation: swinging 1.5s ease-in-out infinite alternate;
+    transform-origin: 200px 13px;
+}
+
+.sign {
+    width: 100%;
+    height: 200px;
+    background: burlywood;
+    border-radius: 15px;
+    position: absolute;
+    bottom: 0;
+    font-size: 70px;
+    color: saddlebrown;
+    font-family: serif;
+    font-weight: bold;
+    text-align: center;
+    line-height: 200px;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 -2px 0 rgba(0, 0, 0, 0.7);
+}
+
+.strings {
+    width: 150px;
+    height: 150px;
+    border: 5px solid brown;
+    position: absolute;
+    border-right: none;
+    border-bottom: none;
+    transform: rotate(45deg);
+    top: 38px;
+    left: 122px;
+}
+
+.pin {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    position: absolute;
+}
+
+.pin.top {
+    background: gray;
+    left: 187px;
+}
+
+.pin.left,
+.pin.right {
+    background: brown;
+    top: 110px;
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+.pin.left {
+    left: 80px;
+}
+
+.pin.right {
+    right: 80px;
+}
+
+@keyframes swinging {
+    from {
+        transform: rotate(10deg);
+    }
+
+    to {
+        transform: rotate(-10deg);
+    }
+}
+```
+
+
+
+
+
+## 更改SecurityConfig类
+
+
+
+在配置类中添加退出映射地址
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //退出登录配置
+        http.logout()
+                //设置退出登录的url
+                .logoutUrl("/logout")
+                //设置退出登录成功后要跳转的url
+                .logoutSuccessUrl("/thanks.html")
+                .permitAll();
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html", "/thanks.html",
+                        "/css/**", "/js/**", "/img/**", "/test/noauth")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+
+
+## 重启服务
+
+
+
+## 访问
+
+
+
+http://localhost:8080/
+
+
+
+![image-20220802133804417](img/SpringSecurity学习笔记/image-20220802133804417.png)
+
+
+
+
+
+![image-20220802133826449](img/SpringSecurity学习笔记/image-20220802133826449.png)
+
+
+
+
+
+点击退出登录
+
+
+
+![image-20220802133849347](img/SpringSecurity学习笔记/image-20220802133849347.png)
+
+
+
+
+
+访问http://localhost:8080/test
+
+http://localhost:8080/test/root
+
+http://localhost:8080/test/admin
+
+
+
+![image-20220802133938502](img/SpringSecurity学习笔记/image-20220802133938502.png)
+
+
+
+都需要登录
+
+
+
+
+
+
+
+
+
+# 注解
+
+
+
