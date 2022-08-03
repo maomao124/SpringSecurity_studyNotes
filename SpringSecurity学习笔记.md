@@ -7859,7 +7859,636 @@ public class TestAnnotationController
 
 
 
+### 更改controller
 
+```java
+package mao.springsecurity_demo.controller;
+
+import mao.springsecurity_demo.entity.Administrators;
+import mao.springsecurity_demo.service.IAdministratorsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreFilter;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): TestAnnotationController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/2
+ * Time(创建时间)： 13:55
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+
+@RestController
+@RequestMapping("/test")
+public class TestAnnotationController
+{
+
+    private static final Logger log = LoggerFactory.getLogger(TestAnnotationController.class);
+
+    /**
+     * Role root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root"})
+    @GetMapping("/anno/root")
+    public String role_root()
+    {
+        return "注解测试，当前需要root角色，访问成功";
+    }
+
+    /**
+     * Role root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_root1"})
+    @GetMapping("/anno/root1")
+    public String role_root1()
+    {
+        return "注解测试，当前需要root1角色，访问成功";
+    }
+
+    /**
+     * Role admin string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin"})
+    @GetMapping("/anno/admin")
+    public String role_admin()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1"})
+    @GetMapping("/anno/admin1")
+    public String role_admin1()
+    {
+        return "注解测试，当前需要admin角色，访问成功";
+    }
+
+    /**
+     * Role admin or root string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root"})
+    @GetMapping("/anno/admin_or_root")
+    public String role_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root角色，访问成功";
+    }
+
+    /**
+     * Role admin or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin", "ROLE_root1"})
+    @GetMapping("/anno/admin_or_root1")
+    public String role_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1角色，访问成功";
+    }
+
+    /**
+     * Role admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @Secured({"ROLE_admin1", "ROLE_root1"})
+    @GetMapping("/anno/admin1_or_root1")
+    public String role_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1角色，访问成功";
+    }
+
+    //--------------------------------------------
+
+    /**
+     * Authority root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root')")
+    @GetMapping("/anno2/root")
+    public String authority_root()
+    {
+        return "注解测试，当前需要root权限，访问成功";
+    }
+
+    /**
+     * Authority root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('root1')")
+    @GetMapping("/anno2/root1")
+    public String authority_root1()
+    {
+        return "注解测试，当前需要root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin')")
+    @GetMapping("/anno2/admin")
+    public String authority_admin()
+    {
+        return "注解测试，当前需要admin权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1')")
+    @GetMapping("/anno2/admin1")
+    public String authority_admin1()
+    {
+        return "注解测试，当前需要admin1权限，访问成功";
+    }
+
+    /**
+     * Authority admin or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root')")
+    @GetMapping("/anno2/admin_or_root")
+    public String authority_admin_or_root()
+    {
+        return "注解测试，当前需要admin或者root权限，访问成功";
+    }
+
+
+    /**
+     * Authority admin or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin','root1')")
+    @GetMapping("/anno2/admin_or_root1")
+    public String authority_admin_or_root1()
+    {
+        return "注解测试，当前需要admin或者root1权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root')")
+    @GetMapping("/anno2/admin1_or_root")
+    public String authority_admin1_or_root()
+    {
+        return "注解测试，当前需要admin1或者root权限，访问成功";
+    }
+
+    /**
+     * Authority admin 1 or root 1 string.
+     *
+     * @return the string
+     */
+    @PreAuthorize("hasAnyAuthority('admin1','root1')")
+    @GetMapping("/anno2/admin1_or_root1")
+    public String authority_admin1_or_root1()
+    {
+        return "注解测试，当前需要admin1或者root1权限，访问成功";
+    }
+
+
+    //----------------------------------------
+
+    /**
+     * Authority 2 root string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('root')")
+    @GetMapping("/anno3/root")
+    public String authority2_root()
+    {
+        log.info("PostAuthorize注解测试，当前需要root权限");
+        return "PostAuthorize注解测试，当前需要root权限，访问成功";
+    }
+
+    /**
+     * Authority 2 root 1 string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('root1')")
+    @GetMapping("/anno3/root1")
+    public String authority2_root1()
+    {
+        log.info("PostAuthorize注解测试，当前需要root1权限");
+        return "PostAuthorize注解测试，当前需要root1权限，访问成功";
+    }
+
+    /**
+     * Authority 2 admin string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('admin')")
+    @GetMapping("/anno3/admin")
+    public String authority2_admin()
+    {
+        log.info("PostAuthorize注解测试，当前需要admin权限");
+        return "PostAuthorize注解测试，当前需要admin权限，访问成功";
+    }
+
+    /**
+     * Authority 2 admin 1 string.
+     *
+     * @return the string
+     */
+    @PostAuthorize("hasAnyAuthority('admin1')")
+    @GetMapping("/anno3/admin1")
+    public String authority2_admin1()
+    {
+        log.info("PostAuthorize注解测试，当前需要admin1权限");
+        return "PostAuthorize注解测试，当前需要admin1权限，访问成功";
+    }
+
+    //-------------------------------------
+
+    /**
+     * Anno 4 1 list.
+     *
+     * @return the list
+     */
+    @PostFilter("filterObject.administratorNo==10002L")
+    @GetMapping("/anno4/1")
+    public List<Administrators> anno4_1()
+    {
+        log.info("执行/anno4/1");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators = new Administrators();
+        administrators.setAdministratorNo(10002L);
+        list.add(administrators);
+        return list;
+    }
+
+    /**
+     * Anno 4 2 list.
+     *
+     * @return the list
+     */
+    @PostFilter("filterObject.administratorNo==10003L")
+    @GetMapping("/anno4/2")
+    public List<Administrators> anno4_2()
+    {
+        log.info("执行/anno4/2");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators = new Administrators();
+        administrators.setAdministratorNo(10002L);
+        list.add(administrators);
+        return list;
+    }
+
+    /**
+     * Anno 4 3 list.
+     *
+     * @return the list
+     */
+    @PostFilter("filterObject.administratorNo==10003L")
+    @GetMapping("/anno4/3")
+    public List<Administrators> anno4_3()
+    {
+        log.info("执行/anno4/3");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators1 = new Administrators();
+        administrators1.setAdministratorNo(10002L);
+        Administrators administrators2 = new Administrators();
+        administrators2.setAdministratorNo(10003L);
+        Administrators administrators3 = new Administrators();
+        administrators3.setAdministratorNo(10004L);
+        list.add(administrators1);
+        list.add(administrators2);
+        list.add(administrators3);
+        return list;
+    }
+
+    /**
+     * Anno 4 4 list.
+     *
+     * @return the list
+     */
+    @PostFilter("filterObject.administratorNo!=10003L")
+    @GetMapping("/anno4/4")
+    public List<Administrators> anno4_4()
+    {
+        log.info("执行/anno4/4");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators1 = new Administrators();
+        administrators1.setAdministratorNo(10002L);
+        Administrators administrators2 = new Administrators();
+        administrators2.setAdministratorNo(10003L);
+        Administrators administrators3 = new Administrators();
+        administrators3.setAdministratorNo(10004L);
+        list.add(administrators1);
+        list.add(administrators2);
+        list.add(administrators3);
+        return list;
+    }
+
+    /**
+     * Anno 4 5 list.
+     *
+     * @return the list
+     */
+    @PostFilter("filterObject.administratorName!=null")
+    @GetMapping("/anno4/5")
+    public List<Administrators> anno4_5()
+    {
+        log.info("执行/anno4/5");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators1 = new Administrators();
+        administrators1.setAdministratorNo(10002L);
+        administrators1.setAdministratorName("张三");
+        Administrators administrators2 = new Administrators();
+        administrators2.setAdministratorNo(10003L);
+        Administrators administrators3 = new Administrators();
+        administrators3.setAdministratorNo(10004L);
+        list.add(administrators1);
+        list.add(administrators2);
+        list.add(administrators3);
+        return list;
+    }
+
+    /**
+     * Anno 4 6 list.
+     *
+     * @return the list
+     */
+    @PostFilter("(filterObject.administratorName!=null)&&(filterObject.administratorSex.equals('男'))")
+    @GetMapping("/anno4/6")
+    public List<Administrators> anno4_6()
+    {
+        log.info("执行/anno4/6");
+        List<Administrators> list = new ArrayList<>();
+        Administrators administrators1 = new Administrators();
+        administrators1.setAdministratorNo(10002L);
+        administrators1.setAdministratorName("张三");
+        administrators1.setAdministratorSex("女");
+        Administrators administrators2 = new Administrators();
+        administrators2.setAdministratorNo(10003L);
+        Administrators administrators3 = new Administrators();
+        administrators3.setAdministratorNo(10004L);
+        Administrators administrators4 = new Administrators();
+        administrators4.setAdministratorNo(10005L);
+        administrators4.setAdministratorName("李四");
+        administrators4.setAdministratorSex("男");
+        list.add(administrators1);
+        list.add(administrators2);
+        list.add(administrators3);
+        list.add(administrators4);
+        return list;
+    }
+
+    @Autowired
+    private IAdministratorsService administratorsService;
+
+    /**
+     * 需求：从数据库查询性别为女的数据
+     *
+     * @return List<Administrators> 对象
+     */
+    @PostFilter("filterObject.administratorSex.equals('女')")
+    @GetMapping("/anno4/7")
+    public List<Administrators> anno4_7()
+    {
+        log.info("执行/anno4/7");
+        List<Administrators> list = administratorsService.query().list();
+        return list;
+    }
+
+    /**
+     * 需求：从数据库查询性别为女的数据
+     *
+     * @return List<Administrators> 对象
+     */
+    @PostFilter("filterObject.administratorSex.equals('男')")
+    @GetMapping("/anno4/8")
+    public List<Administrators> anno4_8()
+    {
+        log.info("执行/anno4/8");
+        List<Administrators> list = administratorsService.query().list();
+        return list;
+    }
+
+    
+    //---------------------------------------------
+    
+    /**
+     * 查询全部
+     *
+     * @return List<Administrators>
+     */
+    @GetMapping("/anno5/0")
+    public List<Administrators> anno5_0()
+    {
+        log.info("执行/anno5/0");
+        List<Administrators> list = administratorsService.query().list();
+        return list;
+    }
+
+    /**
+     * 只需要性别为男的数据
+     *
+     * @param list List<Administrators>
+     * @return List<Administrators> 结果
+     */
+    @PreFilter("filterObject.administratorSex.equals('男')")
+    @PostMapping("/anno5/1")
+    public List<Administrators> anno5_1(@RequestBody List<Administrators> list)
+    {
+        log.info("执行/anno5/1");
+        for (Administrators administrators : list)
+        {
+            log.debug("\n" + administrators + "\n");
+        }
+        return list;
+    }
+
+    /**
+     * 只需要性别为女的数据
+     *
+     * @param list List<Administrators>
+     * @return List<Administrators> 结果
+     */
+    @PreFilter("filterObject.administratorSex.equals('女')")
+    @PostMapping("/anno5/2")
+    public List<Administrators> anno5_2(@RequestBody List<Administrators> list)
+    {
+        log.info("执行/anno5/2");
+        for (Administrators administrators : list)
+        {
+            log.debug("\n" + administrators + "\n");
+        }
+        return list;
+    }
+
+    /**
+     * 只需要名字包含‘唐’字的数据
+     *
+     * @param list List<Administrators>
+     * @return List<Administrators> 结果
+     */
+    @PreFilter("filterObject.administratorName.contains('唐')")
+    @PostMapping("/anno5/3")
+    public List<Administrators> anno5_3(@RequestBody List<Administrators> list)
+    {
+        log.info("执行/anno5/3");
+        for (Administrators administrators : list)
+        {
+            log.debug("\n" + administrators + "\n");
+        }
+        return list;
+    }
+
+}
+
+```
+
+
+
+
+
+### 更改SecurityConfig
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //退出登录配置
+        http.logout()
+                //设置退出登录的url
+                .logoutUrl("/logout")
+                //设置退出登录成功后要跳转的url
+                .logoutSuccessUrl("/thanks.html")
+                .permitAll();
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html", "/thanks.html",
+                        "/css/**", "/js/**", "/img/**",
+                        "/test/noauth", "/test/anno5/**")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+### 重启服务
+
+
+
+### 访问
+
+使用postman测试
 
 
 
@@ -8111,6 +8740,346 @@ public class TestAnnotationController
 ```
 
 
+
+
+
+访问http://localhost:8080/test/anno5/1
+
+post请求
+
+
+
+![image-20220803132115503](img/SpringSecurity学习笔记/image-20220803132115503.png)
+
+
+
+
+
+
+
+
+
+查看结果
+
+
+
+![image-20220803132157012](img/SpringSecurity学习笔记/image-20220803132157012.png)
+
+
+
+
+
+```json
+[
+    {
+        "administratorNo": 10005,
+        "administratorName": "裴策奇",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13906801424",
+        "administratorJob": "计算机学院副院长",
+        "administratorIdcard": "436700200205167159"
+    },
+    {
+        "administratorNo": 10006,
+        "administratorName": "常新",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "15200884859",
+        "administratorJob": "计算机学院副院长",
+        "administratorIdcard": "425230199905174567"
+    },
+    {
+        "administratorNo": 10007,
+        "administratorName": "文波",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13002966149",
+        "administratorJob": "计算机学院副院长",
+        "administratorIdcard": "440405199901072724"
+    },
+    {
+        "administratorNo": 10009,
+        "administratorName": "琴有奇",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13207633407",
+        "administratorJob": "管理员",
+        "administratorIdcard": "437776200107198012"
+    },
+    {
+        "administratorNo": 10010,
+        "administratorName": "容彪诚",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13704933439",
+        "administratorJob": "管理员",
+        "administratorIdcard": "435874200305254814"
+    },
+    {
+        "administratorNo": 10012,
+        "administratorName": "仇生良",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13204292788",
+        "administratorJob": "管理员",
+        "administratorIdcard": "422574200108068146"
+    },
+    {
+        "administratorNo": 10013,
+        "administratorName": "蒙海冠",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13003853784",
+        "administratorJob": "管理员",
+        "administratorIdcard": "423806200205164383"
+    },
+    {
+        "administratorNo": 10016,
+        "administratorName": "向冠",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "15005897305",
+        "administratorJob": "管理员",
+        "administratorIdcard": "430461200304265635"
+    },
+    {
+        "administratorNo": 10017,
+        "administratorName": "彭辉生",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13700370300",
+        "administratorJob": "管理员",
+        "administratorIdcard": "432611200105216186"
+    },
+    {
+        "administratorNo": 10019,
+        "administratorName": "李明",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13804178399",
+        "administratorJob": "管理员",
+        "administratorIdcard": "434880200009014080"
+    },
+    {
+        "administratorNo": 10020,
+        "administratorName": "白鸣坚",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "15601790970",
+        "administratorJob": "管理员",
+        "administratorIdcard": "428468199903043027"
+    },
+    {
+        "administratorNo": 10022,
+        "administratorName": "宰广震",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13306854395",
+        "administratorJob": "管理员",
+        "administratorIdcard": "435022200307255751"
+    },
+    {
+        "administratorNo": 10023,
+        "administratorName": "曾奇利",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13503052929",
+        "administratorJob": "管理员",
+        "administratorIdcard": "431917200309113634"
+    },
+    {
+        "administratorNo": 10024,
+        "administratorName": "离良光",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13205957069",
+        "administratorJob": "管理员",
+        "administratorIdcard": "427136200309201542"
+    },
+    {
+        "administratorNo": 10025,
+        "administratorName": "都德光",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13908498869",
+        "administratorJob": "管理员",
+        "administratorIdcard": "427667200102066356"
+    },
+    {
+        "administratorNo": 10026,
+        "administratorName": "终泰",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13402995699",
+        "administratorJob": "管理员",
+        "administratorIdcard": "421738200201021058"
+    },
+    {
+        "administratorNo": 10027,
+        "administratorName": "乐振",
+        "administratorSex": "男",
+        "administratorTelephoneNumber": "13802950621",
+        "administratorJob": "管理员",
+        "administratorIdcard": "432185200103143063"
+    }
+]
+```
+
+
+
+
+
+查看日志
+
+
+
+```sh
+2022-08-03 13:21:28.760  INFO 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 执行/anno5/1
+2022-08-03 13:21:28.760 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10005
+administratorName：裴策奇
+administratorSex：男
+administratorTelephoneNumber：13906801424
+administratorJob：计算机学院副院长
+administratorIdcard：436700200205167159
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10006
+administratorName：常新
+administratorSex：男
+administratorTelephoneNumber：15200884859
+administratorJob：计算机学院副院长
+administratorIdcard：425230199905174567
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10007
+administratorName：文波
+administratorSex：男
+administratorTelephoneNumber：13002966149
+administratorJob：计算机学院副院长
+administratorIdcard：440405199901072724
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10009
+administratorName：琴有奇
+administratorSex：男
+administratorTelephoneNumber：13207633407
+administratorJob：管理员
+administratorIdcard：437776200107198012
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10010
+administratorName：容彪诚
+administratorSex：男
+administratorTelephoneNumber：13704933439
+administratorJob：管理员
+administratorIdcard：435874200305254814
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10012
+administratorName：仇生良
+administratorSex：男
+administratorTelephoneNumber：13204292788
+administratorJob：管理员
+administratorIdcard：422574200108068146
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10013
+administratorName：蒙海冠
+administratorSex：男
+administratorTelephoneNumber：13003853784
+administratorJob：管理员
+administratorIdcard：423806200205164383
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10016
+administratorName：向冠
+administratorSex：男
+administratorTelephoneNumber：15005897305
+administratorJob：管理员
+administratorIdcard：430461200304265635
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10017
+administratorName：彭辉生
+administratorSex：男
+administratorTelephoneNumber：13700370300
+administratorJob：管理员
+administratorIdcard：432611200105216186
+
+
+2022-08-03 13:21:28.761 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10019
+administratorName：李明
+administratorSex：男
+administratorTelephoneNumber：13804178399
+administratorJob：管理员
+administratorIdcard：434880200009014080
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10020
+administratorName：白鸣坚
+administratorSex：男
+administratorTelephoneNumber：15601790970
+administratorJob：管理员
+administratorIdcard：428468199903043027
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10022
+administratorName：宰广震
+administratorSex：男
+administratorTelephoneNumber：13306854395
+administratorJob：管理员
+administratorIdcard：435022200307255751
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10023
+administratorName：曾奇利
+administratorSex：男
+administratorTelephoneNumber：13503052929
+administratorJob：管理员
+administratorIdcard：431917200309113634
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10024
+administratorName：离良光
+administratorSex：男
+administratorTelephoneNumber：13205957069
+administratorJob：管理员
+administratorIdcard：427136200309201542
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10025
+administratorName：都德光
+administratorSex：男
+administratorTelephoneNumber：13908498869
+administratorJob：管理员
+administratorIdcard：427667200102066356
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10026
+administratorName：终泰
+administratorSex：男
+administratorTelephoneNumber：13402995699
+administratorJob：管理员
+administratorIdcard：421738200201021058
+
+
+2022-08-03 13:21:28.762 DEBUG 6988 --- [nio-8080-exec-5] m.s.controller.TestAnnotationController  : 
+administratorNo：10027
+administratorName：乐振
+administratorSex：男
+administratorTelephoneNumber：13802950621
+administratorJob：管理员
+administratorIdcard：432185200103143063
+```
+
+
+
+
+
+访问http://localhost:8080/test/anno5/2
+
+post请求
 
 
 
