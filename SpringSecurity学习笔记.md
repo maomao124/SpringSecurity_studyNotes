@@ -9083,3 +9083,325 @@ post请求
 
 
 
+![image-20220803132712576](img/SpringSecurity学习笔记/image-20220803132712576.png)
+
+
+
+
+
+查看结果
+
+
+
+![image-20220803132748443](img/SpringSecurity学习笔记/image-20220803132748443.png)
+
+
+
+
+
+
+
+```json
+[
+    {
+        "administratorNo": 10001,
+        "administratorName": "唐淑玲",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13801143638",
+        "administratorJob": "校长",
+        "administratorIdcard": "439165200008274998"
+    },
+    {
+        "administratorNo": 10002,
+        "administratorName": "隗瑶",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "15302990518",
+        "administratorJob": "副校长",
+        "administratorIdcard": "422080200209084877"
+    },
+    {
+        "administratorNo": 10003,
+        "administratorName": "甫黛",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13204546288",
+        "administratorJob": "副校长",
+        "administratorIdcard": "435943200304212416"
+    },
+    {
+        "administratorNo": 10004,
+        "administratorName": "祖瑶影",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13606453515",
+        "administratorJob": "计算机学院院长",
+        "administratorIdcard": "437336199902254962"
+    },
+    {
+        "administratorNo": 10008,
+        "administratorName": "牛巧",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "15906467901",
+        "administratorJob": "管理员",
+        "administratorIdcard": "427804200109122721"
+    },
+    {
+        "administratorNo": 10011,
+        "administratorName": "酆馥霞",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13805661106",
+        "administratorJob": "管理员",
+        "administratorIdcard": "432958199903241775"
+    },
+    {
+        "administratorNo": 10014,
+        "administratorName": "贡瑾育",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13800310215",
+        "administratorJob": "管理员",
+        "administratorIdcard": "436145200003095722"
+    },
+    {
+        "administratorNo": 10015,
+        "administratorName": "钟园璐",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "15204391113",
+        "administratorJob": "管理员",
+        "administratorIdcard": "431764199909143390"
+    },
+    {
+        "administratorNo": 10018,
+        "administratorName": "常荣芝",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13704638779",
+        "administratorJob": "管理员",
+        "administratorIdcard": "422857200104226262"
+    },
+    {
+        "administratorNo": 10021,
+        "administratorName": "富凝珠",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13002418313",
+        "administratorJob": "管理员",
+        "administratorIdcard": "427292200111188298"
+    },
+    {
+        "administratorNo": 10028,
+        "administratorName": "百咏眉",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "15900848912",
+        "administratorJob": "管理员",
+        "administratorIdcard": "432945200311205420"
+    },
+    {
+        "administratorNo": 10029,
+        "administratorName": "益育",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13003655837",
+        "administratorJob": "管理员",
+        "administratorIdcard": "431957200302288367"
+    },
+    {
+        "administratorNo": 10030,
+        "administratorName": "姓岚玲",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "15500945048",
+        "administratorJob": "管理员",
+        "administratorIdcard": "427975200306115062"
+    }
+]
+```
+
+
+
+查看日志
+
+```sh
+2022-08-03 13:27:34.328  INFO 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 执行/anno5/2
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10001
+administratorName：唐淑玲
+administratorSex：女
+administratorTelephoneNumber：13801143638
+administratorJob：校长
+administratorIdcard：439165200008274998
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10002
+administratorName：隗瑶
+administratorSex：女
+administratorTelephoneNumber：15302990518
+administratorJob：副校长
+administratorIdcard：422080200209084877
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10003
+administratorName：甫黛
+administratorSex：女
+administratorTelephoneNumber：13204546288
+administratorJob：副校长
+administratorIdcard：435943200304212416
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10004
+administratorName：祖瑶影
+administratorSex：女
+administratorTelephoneNumber：13606453515
+administratorJob：计算机学院院长
+administratorIdcard：437336199902254962
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10008
+administratorName：牛巧
+administratorSex：女
+administratorTelephoneNumber：15906467901
+administratorJob：管理员
+administratorIdcard：427804200109122721
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10011
+administratorName：酆馥霞
+administratorSex：女
+administratorTelephoneNumber：13805661106
+administratorJob：管理员
+administratorIdcard：432958199903241775
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10014
+administratorName：贡瑾育
+administratorSex：女
+administratorTelephoneNumber：13800310215
+administratorJob：管理员
+administratorIdcard：436145200003095722
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10015
+administratorName：钟园璐
+administratorSex：女
+administratorTelephoneNumber：15204391113
+administratorJob：管理员
+administratorIdcard：431764199909143390
+
+
+2022-08-03 13:27:34.329 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10018
+administratorName：常荣芝
+administratorSex：女
+administratorTelephoneNumber：13704638779
+administratorJob：管理员
+administratorIdcard：422857200104226262
+
+
+2022-08-03 13:27:34.330 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10021
+administratorName：富凝珠
+administratorSex：女
+administratorTelephoneNumber：13002418313
+administratorJob：管理员
+administratorIdcard：427292200111188298
+
+
+2022-08-03 13:27:34.330 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10028
+administratorName：百咏眉
+administratorSex：女
+administratorTelephoneNumber：15900848912
+administratorJob：管理员
+administratorIdcard：432945200311205420
+
+
+2022-08-03 13:27:34.330 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10029
+administratorName：益育
+administratorSex：女
+administratorTelephoneNumber：13003655837
+administratorJob：管理员
+administratorIdcard：431957200302288367
+
+
+2022-08-03 13:27:34.330 DEBUG 6988 --- [nio-8080-exec-8] m.s.controller.TestAnnotationController  : 
+administratorNo：10030
+administratorName：姓岚玲
+administratorSex：女
+administratorTelephoneNumber：15500945048
+administratorJob：管理员
+administratorIdcard：427975200306115062
+```
+
+
+
+
+
+访问http://localhost:8080/test/anno5/3
+
+post请求
+
+
+
+
+
+![image-20220803132910025](img/SpringSecurity学习笔记/image-20220803132910025.png)
+
+
+
+
+
+查看结果
+
+
+
+![image-20220803132941806](img/SpringSecurity学习笔记/image-20220803132941806.png)
+
+
+
+```json
+[
+    {
+        "administratorNo": 10001,
+        "administratorName": "唐淑玲",
+        "administratorSex": "女",
+        "administratorTelephoneNumber": "13801143638",
+        "administratorJob": "校长",
+        "administratorIdcard": "439165200008274998"
+    }
+]
+```
+
+
+
+查看日志
+
+
+
+```sh
+2022-08-03 13:29:22.806  INFO 6988 --- [nio-8080-exec-2] m.s.controller.TestAnnotationController  : 执行/anno5/3
+2022-08-03 13:29:22.806 DEBUG 6988 --- [nio-8080-exec-2] m.s.controller.TestAnnotationController  : 
+administratorNo：10001
+administratorName：唐淑玲
+administratorSex：女
+administratorTelephoneNumber：13801143638
+administratorJob：校长
+administratorIdcard：439165200008274998
+```
+
+
+
+
+
+
+
+
+
+# 基于数据库实现记住我
+
+
+
+即关闭浏览器再重新打开还能访问访问
+
+
+
