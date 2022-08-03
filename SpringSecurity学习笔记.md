@@ -9397,11 +9397,561 @@ administratorIdcard：439165200008274998
 
 
 
-# 基于数据库实现记住我
+# 基于数据库实现自动登录
 
 
 
 即关闭浏览器再重新打开还能访问访问
 
 
+
+
+
+## 创建表
+
+
+
+```sql
+CREATE TABLE `persistent_logins` (
+ `username` varchar(64) NOT NULL,
+ `series` varchar(64) NOT NULL,
+ `token` varchar(64) NOT NULL,
+ `last_used` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE 
+CURRENT_TIMESTAMP,
+ PRIMARY KEY (`series`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
+
+
+```sh
+C:\Users\mao>mysql -u root -p
+Enter password: ********
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 8.0.27 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| cloud_order        |
+| cloud_user         |
+| hotel              |
+| information_schema |
+| mysql              |
+| nacos              |
+| performance_schema |
+| sakila             |
+| seata              |
+| seata_demo         |
+| shop               |
+| student            |
+| student1           |
+| student_test       |
+| sys                |
+| test               |
+| tx                 |
+| world              |
++--------------------+
+18 rows in set (0.01 sec)
+
+mysql> use student1;
+Database changed
+mysql> show tables;
++-------------------------+
+| Tables_in_student1      |
++-------------------------+
+| administrators          |
+| administrators_password |
+| class                   |
+| course                  |
+| forum                   |
+| login_log               |
+| news                    |
+| score                   |
+| student                 |
+| student_password        |
+| teach                   |
+| teacher                 |
+| teacher_password        |
++-------------------------+
+13 rows in set (0.01 sec)
+
+mysql>
+mysql> CREATE TABLE `persistent_logins` (
+    ->  `username` varchar(64) NOT NULL,
+    ->  `series` varchar(64) NOT NULL,
+    ->  `token` varchar(64) NOT NULL,
+    ->  `last_used` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE
+    -> CURRENT_TIMESTAMP,
+    ->  PRIMARY KEY (`series`)
+    -> ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+Query OK, 0 rows affected, 1 warning (0.02 sec)
+
+mysql> show tables;
++-------------------------+
+| Tables_in_student1      |
++-------------------------+
+| administrators          |
+| administrators_password |
+| class                   |
+| course                  |
+| forum                   |
+| login_log               |
+| news                    |
+| persistent_logins       |
+| score                   |
+| student                 |
+| student_password        |
+| teach                   |
+| teacher                 |
+| teacher_password        |
++-------------------------+
+14 rows in set (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+## 编写配置类
+
+
+
+创建一个配置类AutoLoginSecurityConfig
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+
+import javax.sql.DataSource;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): AutoLoginSecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/3
+ * Time(创建时间)： 13:43
+ * Version(版本): 1.0
+ * Description(描述)： 自动登录的配置
+ */
+
+@Configuration
+public class AutoLoginSecurityConfig
+{
+    @Autowired
+    private DataSource dataSource;
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository()
+    {
+        //创建对应的实现类的对象
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        //设置数据源
+        jdbcTokenRepository.setDataSource(dataSource);
+        //自动创建表
+        //jdbcTokenRepository.setCreateTableOnStartup(true);
+        return jdbcTokenRepository;
+    }
+}
+```
+
+
+
+
+
+## 更改SecurityConfig
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Autowired
+    private PersistentTokenRepository persistentTokenRepository;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/login.html")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //退出登录配置
+        http.logout()
+                //设置退出登录的url
+                .logoutUrl("/logout")
+                //设置退出登录成功后要跳转的url
+                .logoutSuccessUrl("/thanks.html")
+                .permitAll();
+
+        //自动登录配置
+        http.rememberMe()
+                //指定要使用的PersistentTokenRepository 。默认是使用TokenBasedRememberMeServices
+                .tokenRepository(persistentTokenRepository)
+                //指定当记住我令牌有效时用于查找UserDetails的UserDetailsService
+                .userDetailsService(userDetailsService)
+                //设置有效期，单位是秒，默认是2周时间。即使项目重新启动下次也可以正常登录
+                .tokenValiditySeconds(2 * 60)
+                //设置表单的记住密码项参数名称，默认是remember-me
+                .rememberMeParameter("remember-me");
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html", "/thanks.html",
+                        "/css/**", "/js/**", "/img/**",
+                        "/test/noauth", "/test/anno5/**")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+
+```
+
+
+
+
+
+
+
+## 更改表单
+
+
+
+添加一个input标签
+
+```html
+<input type="checkbox"name="remember-me"title="记住密码"/>
+```
+
+
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): login
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 15:09
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <link rel="stylesheet" href="css/form.css">
+    <link rel="stylesheet" href="css/animate.css">
+    <style>
+        body {
+            background-color: skyblue;
+        }
+
+        #remember-me {
+            width: 300px;
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="text_position">
+    <div class="text animated flipInY">
+        登录
+    </div>
+</div>
+
+<div class="form_position">
+    <div class="animated bounceInDown">
+        <div class="form">
+            <form action="/login" method="post">
+                <table border="1">
+                    <tr>
+                        <td colspan="2" align="center">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">用户ID</td>
+                        <td>
+                            <label>
+                                <input class="input" type="text" name="username" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">密码</td>
+                        <td>
+                            <label>
+                                <input class="input" type="password" name="password" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">记住密码</td>
+                        <td>
+                            <label>
+                                <input id="remember-me" class="input" type="checkbox" name="remember-me" title="记住密码">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input class="submit" type="submit" value="提交"/>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+
+
+</script>
+
+</html>
+```
+
+
+
+
+
+
+
+## 重启服务
+
+
+
+## 访问
+
+
+
+登录
+
+勾选记住密码
+
+
+
+![image-20220803141723361](img/SpringSecurity学习笔记/image-20220803141723361.png)
+
+
+
+![image-20220803141754998](img/SpringSecurity学习笔记/image-20220803141754998.png)
+
+
+
+
+
+
+
+## 访问数据库
+
+
+
+![image-20220803141833237](img/SpringSecurity学习笔记/image-20220803141833237.png)
+
+
+
+
+
+
+
+## 重启浏览器
+
+
+
+直接跳过了登录
+
+
+
+![image-20220803141913216](img/SpringSecurity学习笔记/image-20220803141913216.png)
+
+
+
+
+
+
+
+## 访问数据库
+
+
+
+最后一个字段的数据被改变
+
+![image-20220803142022415](img/SpringSecurity学习笔记/image-20220803142022415.png)
+
+
+
+
+
+## 等待token过期
+
+token过期后重启浏览器再访问
+
+
+
+![image-20220803142302506](img/SpringSecurity学习笔记/image-20220803142302506.png)
+
+
+
+需要登录
+
+
+
+
+
+## 再次登录
+
+
+
+![image-20220803142402996](img/SpringSecurity学习笔记/image-20220803142402996.png)
+
+
+
+
+
+## 查看数据库
+
+
+
+![image-20220803142423066](img/SpringSecurity学习笔记/image-20220803142423066.png)
+
+
+
+
+
+
+
+## 退出登录
+
+
+
+点击退出登录
+
+
+
+![image-20220803142519735](img/SpringSecurity学习笔记/image-20220803142519735.png)
+
+
+
+
+
+## 查看数据库
+
+
+
+![image-20220803142535687](img/SpringSecurity学习笔记/image-20220803142535687.png)
+
+
+
+
+
+如果再次重启浏览器再访问，就会需要登录
+
+
+
+
+
+
+
+
+
+
+
+
+
+# CSRF
 
