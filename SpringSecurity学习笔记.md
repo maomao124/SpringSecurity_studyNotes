@@ -10663,3 +10663,897 @@ public final class CsrfFilter extends OncePerRequestFilter {
         </dependency>
 ```
 
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.2</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>mao</groupId>
+    <artifactId>springSecurity_demo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>springSecurity_demo</name>
+    <description>springSecurity_demo</description>
+    <properties>
+        <java.version>11</java.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- spring security 安全框架依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- spring security 安全框架测试依赖 -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--mysql依赖 spring-boot-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.27</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--spring-boot druid连接池依赖-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.2.8</version>
+        </dependency>
+
+        <!--spring-boot mybatis-plus依赖-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+
+        <!--mybatis-plus代码生成器-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-generator</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <!-- 模板引擎 默认 -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-engine-core</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <!--swagger-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
+        <!--模板引擎thymeleaf-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!--对Thymeleaf添加Spring Security标签支持-->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+        </dependency>
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+
+
+
+
+### 移动登录页面
+
+移动登录页面到模板引擎目录下
+
+
+
+![image-20220803203946635](img/SpringSecurity学习笔记/image-20220803203946635.png)
+
+
+
+
+
+### 更改登录页面
+
+加入以下标签
+
+```html
+<input type="hidden" th:if="${_csrf}!=null" th:value="${_csrf.token} " name="_csrf"/>
+```
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): login
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 15:09
+  Description(描述)： 无
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <link rel="stylesheet" href="css/form.css">
+    <link rel="stylesheet" href="css/animate.css">
+    <style>
+        body {
+            background-color: skyblue;
+        }
+
+        #remember-me {
+            width: 300px;
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="text_position">
+    <div class="text animated flipInY">
+        登录
+    </div>
+</div>
+
+<div class="form_position">
+    <div class="animated bounceInDown">
+        <div class="form">
+            <form action="/login" method="post">
+                <table border="1">
+                    <tr>
+                        <td colspan="2" align="center">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">用户ID</td>
+                        <td>
+                            <label>
+                                <input class="input" type="text" name="username" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">密码</td>
+                        <td>
+                            <label>
+                                <input class="input" type="password" name="password" required="required">
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="prompt">记住密码</td>
+                        <td>
+                            <label>
+                                <input id="remember-me" class="input" type="checkbox" name="remember-me" title="记住密码">
+                                <input type="hidden" th:if="${_csrf}!=null" th:value="${_csrf.token} " name="_csrf"/>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input class="submit" type="submit" value="提交"/>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+
+
+</script>
+
+</html>
+```
+
+
+
+
+
+### 更改error.html
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): error
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 15:51
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>error</title>
+    <link rel="stylesheet" href="css/error.css">
+</head>
+<body>
+
+<a class="warning" href="/userLogin">错误：账号或者密码不正确</a>
+
+</body>
+</html>
+```
+
+
+
+
+
+### 更改thanks.html
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): thanks
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/2
+  Time(创建时间)： 13:27
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>感谢使用</title>
+    <link rel="stylesheet" href="/css/thanks.css">
+</head>
+<body>
+
+<div>
+    <div class="thanks">
+        <a href="/userLogin" class="sign">感谢使用</a>
+        <!--<div class="sign">感谢</div>-->
+        <div class="strings"></div>
+        <div class="pin top"></div>
+        <div class="pin left"></div>
+        <div class="pin right"></div>
+    </div>
+</div>
+
+</body>
+</html>
+```
+
+
+
+### 添加controller
+
+名字PageController
+
+
+
+```java
+package mao.springsecurity_demo.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.controller
+ * Class(类名): PageController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/1
+ * Time(创建时间)： 16:39
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+
+@Controller
+@RequestMapping()
+public class PageController
+{
+    private static final Logger log = LoggerFactory.getLogger(PageController.class);
+
+/*    @RequestMapping("/index")
+    public ModelAndView index()
+    {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.setViewName("index");
+        return modelAndView;
+    }*/
+
+    @RequestMapping("/userLogin")
+    public String login(HttpServletRequest httpServletRequest)
+    {
+        log.debug("IP:" + httpServletRequest.getRemoteAddr() + " get login page");
+        return "login";
+    }
+}
+```
+
+
+
+
+
+### 更改SecurityConfig
+
+
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Autowired
+    private PersistentTokenRepository persistentTokenRepository;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/userLogin")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        //如果启用csrf，则必须要在表单加入以下标签
+        //<input type="hidden" th:if="${_csrf}!=null" th:value="${_csrf.token} " name="_csrf"/>
+        //http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //退出登录配置
+        http.logout()
+                //设置退出登录的url
+                .logoutUrl("/logout")
+                //设置退出登录成功后要跳转的url
+                .logoutSuccessUrl("/thanks.html")
+                .permitAll();
+
+        //自动登录配置
+        http.rememberMe()
+                //指定要使用的PersistentTokenRepository 。默认是使用TokenBasedRememberMeServices
+                .tokenRepository(persistentTokenRepository)
+                //指定当记住我令牌有效时用于查找UserDetails的UserDetailsService
+                .userDetailsService(userDetailsService)
+                //设置有效期，单位是秒，默认是2周时间。即使项目重新启动下次也可以正常登录
+                .tokenValiditySeconds(2 * 60 * 60)
+                //设置表单的记住密码项参数名称，默认是remember-me
+                .rememberMeParameter("remember-me");
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html", "/thanks.html",
+                        "/css/**", "/js/**", "/img/**",
+                        "/test/noauth", "/test/anno5/**","/userLogin")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+### 重启服务
+
+
+
+```sh
+OpenJDK 64-Bit Server VM warning: Options -Xverify:none and -noverify were deprecated in JDK 13 and will likely be removed in a future release.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.2)
+
+2022-08-03 20:47:41.283  INFO 17400 --- [           main] m.s.SpringSecurityDemoApplication        : Starting SpringSecurityDemoApplication using Java 16.0.2 on mao with PID 17400 (H:\程序\大三暑假\springSecurity_demo\target\classes started by mao in H:\程序\大三暑假\springSecurity_demo)
+2022-08-03 20:47:41.285 DEBUG 17400 --- [           main] m.s.SpringSecurityDemoApplication        : Running with Spring Boot v2.7.2, Spring v5.3.22
+2022-08-03 20:47:41.286  INFO 17400 --- [           main] m.s.SpringSecurityDemoApplication        : The following 1 profile is active: "dev"
+2022-08-03 20:47:42.133  INFO 17400 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2022-08-03 20:47:42.140  INFO 17400 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2022-08-03 20:47:42.141  INFO 17400 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.65]
+2022-08-03 20:47:42.226  INFO 17400 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2022-08-03 20:47:42.226  INFO 17400 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 905 ms
+2022-08-03 20:47:42.287  INFO 17400 --- [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2022-08-03 20:47:42.377  INFO 17400 --- [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.1 
+2022-08-03 20:47:42.870  INFO 17400 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2022-08-03 20:47:43.133  INFO 17400 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@59e7564b, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@482ba4b1, org.springframework.security.web.context.SecurityContextPersistenceFilter@267891bf, org.springframework.security.web.header.HeaderWriterFilter@4b4814d0, org.springframework.security.web.csrf.CsrfFilter@53feeac9, org.springframework.security.web.authentication.logout.LogoutFilter@7af1d072, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@27ffd9f8, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@111a7973, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@15369d73, org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter@17216605, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@307af381, org.springframework.security.web.session.SessionManagementFilter@54326e9, org.springframework.security.web.access.ExceptionTranslationFilter@3b170235, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@53d30d23]
+2022-08-03 20:47:43.201  INFO 17400 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-03 20:47:43.211  INFO 17400 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 2.273 seconds (JVM running for 2.791)
+
+```
+
+
+
+
+
+### 访问
+
+http://localhost:8080/userLogin
+
+
+
+![image-20220803204859704](img/SpringSecurity学习笔记/image-20220803204859704.png)
+
+
+
+
+
+![image-20220803204912741](img/SpringSecurity学习笔记/image-20220803204912741.png)
+
+
+
+
+
+日志
+
+```sh
+2022-08-03 20:47:43.201  INFO 17400 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-08-03 20:47:43.211  INFO 17400 --- [           main] m.s.SpringSecurityDemoApplication        : Started SpringSecurityDemoApplication in 2.273 seconds (JVM running for 2.791)
+2022-08-03 20:48:27.747  INFO 17400 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2022-08-03 20:48:27.748  INFO 17400 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2022-08-03 20:48:27.749  INFO 17400 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2022-08-03 20:48:27.820 DEBUG 17400 --- [nio-8080-exec-2] m.s.controller.PageController            : IP:0:0:0:0:0:0:0:1 get login page
+2022-08-03 20:49:05.455 DEBUG 17400 --- [nio-8080-exec-5] m.s.service.AdministratorsLoginService   : 进入AdministratorsLoginService
+2022-08-03 20:49:05.709 DEBUG 17400 --- [nio-8080-exec-5] m.s.m.A.selectList                       : ==>  Preparing: SELECT administrator_no,administrator_password FROM administrators_password WHERE (administrator_no = ?)
+2022-08-03 20:49:05.724 DEBUG 17400 --- [nio-8080-exec-5] m.s.m.A.selectList                       : ==> Parameters: 10001(Long)
+2022-08-03 20:49:05.738 DEBUG 17400 --- [nio-8080-exec-5] m.s.m.A.selectList                       : <==      Total: 1
+```
+
+
+
+
+
+
+
+
+
+## 解决logout问题
+
+如果启用 CSRF 保护（默认），则请求也必须是 POST。这意味着默认情况下需要 POST "/logout" 来触发注销。如果禁用 CSRF 保护，则允许任何 HTTP 方法。
+对任何更改状态（即注销）的操作使用 HTTP POST 以防止CSRF 攻击
+
+
+
+![image-20220803205244574](img/SpringSecurity学习笔记/image-20220803205244574.png)
+
+
+
+
+
+有两种解决方法：
+
+* 方法一：使用post方式提交，可以发送一个空的表单，也可以发送ajax请求，推荐
+* 方法二：将/logout路径设置成get请求
+
+
+
+
+
+### 方法一
+
+
+
+更改索引页面
+
+
+
+表单方式
+
+
+
+```html
+<form class="logout" action="/logout" method="post">
+    <input type="submit" value="退出登录">
+</form>
+```
+
+
+
+ajax请求
+
+
+
+```html
+<!DOCTYPE html>
+
+<!--
+Project name(项目名称)：springSecurity_demo
+  File name(文件名): index
+  Authors(作者）: mao
+  Author QQ：1296193245
+  GitHub：https://github.com/maomao124/
+  Date(创建日期)： 2022/8/1
+  Time(创建时间)： 18:49
+  Description(描述)： 无
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>索引</title>
+    <style>
+        .logout {
+            position: absolute;
+            top: 1%;
+            right: 0.5%;
+            text-decoration: none;
+            font-size: 2em;
+            transition: all 1s linear 0s;
+            color: royalblue;
+        }
+
+        .logout:hover {
+            transition: all 1s linear 0s;
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>
+    登录成功
+</h1>
+
+<!--<a class="logout" href="/logout">退出登录</a>-->
+
+<!--<form class="logout" action="/logout" method="post">-->
+<!--    <input type="submit" value="退出登录">-->
+<!--</form>-->
+
+<button class="logout" onclick="logout()" id="button">退出登录</button>
+
+<script>
+
+    //XMLHttpRequest对象
+    let xhr;
+    //是否正在发送请求
+    let isSending = false;
+
+    function logout()
+    {
+        //如果正在发送请求
+        if (isSending === true)
+        {
+            //取消正在发送的请求
+            xhr.abort();
+        }
+
+        //发起异步请求
+        xhr = new XMLHttpRequest();
+        //设置响应信息为json
+        xhr.responseType = "json";
+        //超时设置，单位为毫秒
+        xhr.timeout = 5000;
+        //超时的回调函数
+        xhr.ontimeout = function ()
+        {
+            alert("请求超时，请稍后再试！");
+        }
+        //初始化，设置请求方式和url
+        xhr.open("post", "/logout");
+        //设置状态为正在发送
+        isSending = true;
+        //发送异步请求
+        xhr.send();
+
+        xhr.onreadystatechange = function ()
+        {
+            //状态为4时处理
+            if (xhr.readyState === 4)
+            {
+                //落在200-300之间处理
+                if (xhr.status >= 200 && xhr.status < 300)
+                {
+                    //将状态设置成false
+                    isSending = false;
+                    console.log(xhr.response);
+                    location.assign("/thanks.html")
+                }
+            }
+        }
+    }
+
+</script>
+
+</body>
+</html>
+```
+
+
+
+
+
+### 方法二
+
+
+
+还原成get请求
+
+```html
+<a class="logout" href="/logout">退出登录</a>
+```
+
+
+
+
+
+更改SecurityConfig类
+
+```java
+package mao.springsecurity_demo.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+/**
+ * Project name(项目名称)：springSecurity_demo
+ * Package(包名): mao.springsecurity_demo.config
+ * Class(类名): SecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/7/30
+ * Time(创建时间)： 20:30
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter
+{
+    @Autowired
+    private PersistentTokenRepository persistentTokenRepository;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //表单登录配置
+        http.formLogin()
+                //设置登录页面
+                .loginPage("/userLogin")
+                //设置哪个是登录的 url
+                .loginProcessingUrl("/login")
+                //设置登录成功之后跳转到哪个 url
+                .defaultSuccessUrl("/index.html", false)
+                //.successForwardUrl("/index")
+                //设置登录失败之后跳转到哪个url
+                .failureUrl("/error.html")
+                //.failureForwardUrl("fail")
+                //设置表单的用户名项参数名称
+                .usernameParameter("username")
+                //设置表单的密码项参数名称
+                .passwordParameter("password");
+
+        //关闭csrf
+        //如果启用csrf，则必须要在表单加入以下标签
+        //<input type="hidden" th:if="${_csrf}!=null" th:value="${_csrf.token} " name="_csrf"/>
+        //http.csrf().disable();
+
+        //异常处理配置，403页面配置
+        http.exceptionHandling().accessDeniedPage("/unAuth.html");
+
+        //退出登录配置
+        http.logout()
+                //设置退出登录的url
+                //如果启用 CSRF 保护（默认），则请求也必须是 POST。这意味着默认情况下需要 POST "/logout" 来触发注销。
+                //如果禁用 CSRF 保护，则允许任何 HTTP 方法。
+                //对任何更改状态（即注销）的操作使用 HTTP POST 以防止CSRF 攻击 被认为是最好的。
+                //如果你真的想使用 HTTP GET，你可以使用logoutRequestMatcher(new AntPathRequestMatcher(logoutUrl, "GET"));
+                //.logoutUrl("/logout")
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                //设置退出登录成功后要跳转的url
+                .logoutSuccessUrl("/thanks.html")
+                .permitAll();
+
+        //自动登录配置
+        http.rememberMe()
+                //指定要使用的PersistentTokenRepository 。默认是使用TokenBasedRememberMeServices
+                .tokenRepository(persistentTokenRepository)
+                //指定当记住我令牌有效时用于查找UserDetails的UserDetailsService
+                .userDetailsService(userDetailsService)
+                //设置有效期，单位是秒，默认是2周时间。即使项目重新启动下次也可以正常登录
+                .tokenValiditySeconds(2 * 60 * 60)
+                //设置表单的记住密码项参数名称，默认是remember-me
+                .rememberMeParameter("remember-me");
+
+        //认证配置
+        http.authorizeRequests()
+                //指定页面不需要验证
+                .antMatchers("/login.html", "/login", "/error.html", "/thanks.html",
+                        "/css/**", "/js/**", "/img/**",
+                        "/test/noauth", "/test/anno5/**","/userLogin")
+                .permitAll()
+                .antMatchers("/test/root").hasAuthority("root")
+                .antMatchers("/test/admin").hasAuthority("admin")
+                .antMatchers("/test/rootOrAdmin").hasAnyAuthority("root", "admin")
+                .antMatchers("/test/role_root").hasRole("root")
+                .antMatchers("/test/role_root_or_admin").hasAnyRole("root", "admin")
+                //其它请求都需要身份认证
+                .anyRequest()
+                .authenticated();
+
+    }
+
+
+/*
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+*/
+
+}
+```
+
+
+
+
+
+重启服务
+
+
+
+登录
+
+
+
+进入索引页面后点击退出登录
+
+
+
+![image-20220803205928863](img/SpringSecurity学习笔记/image-20220803205928863.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 微服务权限方案
+
+
+
+
+
