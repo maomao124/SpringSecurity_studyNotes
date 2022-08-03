@@ -9955,3 +9955,711 @@ token过期后重启浏览器再访问
 
 # CSRF
 
+
+
+## 概念
+
+跨站请求伪造（英语：Cross-site request forgery），也被称为 one-click  attack 或者 session riding，通常缩写为 CSRF 或者 XSRF， 是一种挟制用户在当前已 登录的 Web 应用程序上执行非本意的操作的攻击方法。跟跨网站脚本（XSS）相比，XSS 利用的是用户对指定网站的信任，CSRF 利用的是网站对用户网页浏览器的信任。
+
+跨站请求攻击，简单地说，是攻击者通过一些技术手段欺骗用户的浏览器去访问一个 自己曾经认证过的网站并运行一些操作（如发邮件，发消息，甚至财产操作如转账和购买 商品）。由于浏览器曾经认证过，所以被访问的网站会认为是真正的用户操作而去运行。 这利用了 web 中用户身份验证的一个漏洞：简单的身份验证只能保证请求发自某个用户的 浏览器，却不能保证请求本身是用户自愿发出的。
+
+从 Spring Security 4.0 开始，默认情况下会启用 CSRF 保护，以防止 CSRF 攻击应用 程序，Spring Security CSRF 会针对 PATCH，POST，PUT 和 DELETE 方法进行防护。
+
+
+
+
+
+## 原理
+
+
+
+![image-20220803144305892](img/SpringSecurity学习笔记/image-20220803144305892.png)
+
+
+
+要完成一次CSRF攻击，受害者必须依次完成两个步骤：
+
+*  登录受信任网站A，并在本地生成Cookie。
+* 在不登出A的情况下，访问危险网站B。 
+
+
+
+
+
+
+
+## 实现的原理
+
+
+
+1. 生成 csrfToken 保存到 HttpSession 或者 Cookie 中
+
+
+
+CsrfToken接口
+
+```java
+/*
+ * Copyright 2002-2013 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.springframework.security.web.csrf;
+
+import java.io.Serializable;
+
+/**
+ * Provides the information about an expected CSRF token.
+ *
+ * @author Rob Winch
+ * @since 3.2
+ * @see DefaultCsrfToken
+ */
+public interface CsrfToken extends Serializable {
+
+   /**
+    * Gets the HTTP header that the CSRF is populated on the response and can be placed
+    * on requests instead of the parameter. Cannot be null.
+    * @return the HTTP header that the CSRF is populated on the response and can be
+    * placed on requests instead of the parameter
+    */
+   String getHeaderName();
+
+   /**
+    * Gets the HTTP parameter name that should contain the token. Cannot be null.
+    * @return the HTTP parameter name that should contain the token.
+    */
+   String getParameterName();
+
+   /**
+    * Gets the token value. Cannot be null.
+    * @return the token value
+    */
+   String getToken();
+
+}
+```
+
+
+
+
+
+实现类
+
+![image-20220803194819438](img/SpringSecurity学习笔记/image-20220803194819438.png)
+
+
+
+
+
+SaveOnAccessCsrfToken类
+
+```java
+private static final class SaveOnAccessCsrfToken implements CsrfToken {
+
+   private transient CsrfTokenRepository tokenRepository;
+
+   private transient HttpServletRequest request;
+
+   private transient HttpServletResponse response;
+
+   private final CsrfToken delegate;
+
+   SaveOnAccessCsrfToken(CsrfTokenRepository tokenRepository, HttpServletRequest request,
+         HttpServletResponse response, CsrfToken delegate) {
+      this.tokenRepository = tokenRepository;
+      this.request = request;
+      this.response = response;
+      this.delegate = delegate;
+   }
+
+   @Override
+   public String getHeaderName() {
+      return this.delegate.getHeaderName();
+   }
+
+   @Override
+   public String getParameterName() {
+      return this.delegate.getParameterName();
+   }
+
+   @Override
+   public String getToken() {
+      saveTokenIfNecessary();
+      return this.delegate.getToken();
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+         return false;
+      }
+      SaveOnAccessCsrfToken other = (SaveOnAccessCsrfToken) obj;
+      if (this.delegate == null) {
+         if (other.delegate != null) {
+            return false;
+         }
+      }
+      else if (!this.delegate.equals(other.delegate)) {
+         return false;
+      }
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((this.delegate == null) ? 0 : this.delegate.hashCode());
+      return result;
+   }
+
+   @Override
+   public String toString() {
+      return "SaveOnAccessCsrfToken [delegate=" + this.delegate + "]";
+   }
+
+   private void saveTokenIfNecessary() {
+      if (this.tokenRepository == null) {
+         return;
+      }
+      synchronized (this) {
+         if (this.tokenRepository != null) {
+            this.tokenRepository.saveToken(this.delegate, this.request, this.response);
+            this.tokenRepository = null;
+            this.request = null;
+            this.response = null;
+         }
+      }
+   }
+
+}
+```
+
+
+
+SaveOnAccessCsrfToken 类有个接口 CsrfTokenRepository
+
+
+
+```java
+/*
+ * Copyright 2002-2013 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.springframework.security.web.csrf;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+/**
+ * An API to allow changing the method in which the expected {@link CsrfToken} is
+ * associated to the {@link HttpServletRequest}. For example, it may be stored in
+ * {@link HttpSession}.
+ *
+ * @author Rob Winch
+ * @since 3.2
+ * @see HttpSessionCsrfTokenRepository
+ */
+public interface CsrfTokenRepository {
+
+   /**
+    * Generates a {@link CsrfToken}
+    * @param request the {@link HttpServletRequest} to use
+    * @return the {@link CsrfToken} that was generated. Cannot be null.
+    */
+   CsrfToken generateToken(HttpServletRequest request);
+
+   /**
+    * Saves the {@link CsrfToken} using the {@link HttpServletRequest} and
+    * {@link HttpServletResponse}. If the {@link CsrfToken} is null, it is the same as
+    * deleting it.
+    * @param token the {@link CsrfToken} to save or null to delete
+    * @param request the {@link HttpServletRequest} to use
+    * @param response the {@link HttpServletResponse} to use
+    */
+   void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response);
+
+   /**
+    * Loads the expected {@link CsrfToken} from the {@link HttpServletRequest}
+    * @param request the {@link HttpServletRequest} to use
+    * @return the {@link CsrfToken} or null if none exists
+    */
+   CsrfToken loadToken(HttpServletRequest request);
+
+}
+```
+
+
+
+
+
+接口有4个实现类
+
+![image-20220803195524966](img/SpringSecurity学习笔记/image-20220803195524966.png)
+
+
+
+实现类CookieCsrfTokenRepository
+
+```java
+package org.springframework.security.web.csrf;
+
+import java.util.UUID;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.WebUtils;
+
+/**
+ * A {@link CsrfTokenRepository} that persists the CSRF token in a cookie named
+ * "XSRF-TOKEN" and reads from the header "X-XSRF-TOKEN" following the conventions of
+ * AngularJS. When using with AngularJS be sure to use {@link #withHttpOnlyFalse()}.
+ *
+ * @author Rob Winch
+ * @since 4.1
+ */
+public final class CookieCsrfTokenRepository implements CsrfTokenRepository {
+
+   static final String DEFAULT_CSRF_COOKIE_NAME = "XSRF-TOKEN";
+
+   static final String DEFAULT_CSRF_PARAMETER_NAME = "_csrf";
+
+   static final String DEFAULT_CSRF_HEADER_NAME = "X-XSRF-TOKEN";
+
+   private String parameterName = DEFAULT_CSRF_PARAMETER_NAME;
+
+   private String headerName = DEFAULT_CSRF_HEADER_NAME;
+
+   private String cookieName = DEFAULT_CSRF_COOKIE_NAME;
+
+   private boolean cookieHttpOnly = true;
+
+   private String cookiePath;
+
+   private String cookieDomain;
+
+   private Boolean secure;
+
+   private int cookieMaxAge = -1;
+
+   public CookieCsrfTokenRepository() {
+   }
+
+   @Override
+   public CsrfToken generateToken(HttpServletRequest request) {
+      return new DefaultCsrfToken(this.headerName, this.parameterName, createNewToken());
+   }
+
+   @Override
+   public void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response) {
+      String tokenValue = (token != null) ? token.getToken() : "";
+      Cookie cookie = new Cookie(this.cookieName, tokenValue);
+      cookie.setSecure((this.secure != null) ? this.secure : request.isSecure());
+      cookie.setPath(StringUtils.hasLength(this.cookiePath) ? this.cookiePath : this.getRequestContext(request));
+      cookie.setMaxAge((token != null) ? this.cookieMaxAge : 0);
+      cookie.setHttpOnly(this.cookieHttpOnly);
+      if (StringUtils.hasLength(this.cookieDomain)) {
+         cookie.setDomain(this.cookieDomain);
+      }
+      response.addCookie(cookie);
+   }
+
+   @Override
+   public CsrfToken loadToken(HttpServletRequest request) {
+      Cookie cookie = WebUtils.getCookie(request, this.cookieName);
+      if (cookie == null) {
+         return null;
+      }
+      String token = cookie.getValue();
+      if (!StringUtils.hasLength(token)) {
+         return null;
+      }
+      return new DefaultCsrfToken(this.headerName, this.parameterName, token);
+   }
+
+   /**
+    * Sets the name of the HTTP request parameter that should be used to provide a token.
+    * @param parameterName the name of the HTTP request parameter that should be used to
+    * provide a token
+    */
+   public void setParameterName(String parameterName) {
+      Assert.notNull(parameterName, "parameterName cannot be null");
+      this.parameterName = parameterName;
+   }
+
+   /**
+    * Sets the name of the HTTP header that should be used to provide the token.
+    * @param headerName the name of the HTTP header that should be used to provide the
+    * token
+    */
+   public void setHeaderName(String headerName) {
+      Assert.notNull(headerName, "headerName cannot be null");
+      this.headerName = headerName;
+   }
+
+   /**
+    * Sets the name of the cookie that the expected CSRF token is saved to and read from.
+    * @param cookieName the name of the cookie that the expected CSRF token is saved to
+    * and read from
+    */
+   public void setCookieName(String cookieName) {
+      Assert.notNull(cookieName, "cookieName cannot be null");
+      this.cookieName = cookieName;
+   }
+
+   /**
+    * Sets the HttpOnly attribute on the cookie containing the CSRF token. Defaults to
+    * <code>true</code>.
+    * @param cookieHttpOnly <code>true</code> sets the HttpOnly attribute,
+    * <code>false</code> does not set it
+    */
+   public void setCookieHttpOnly(boolean cookieHttpOnly) {
+      this.cookieHttpOnly = cookieHttpOnly;
+   }
+
+   private String getRequestContext(HttpServletRequest request) {
+      String contextPath = request.getContextPath();
+      return (contextPath.length() > 0) ? contextPath : "/";
+   }
+
+   /**
+    * Factory method to conveniently create an instance that has
+    * {@link #setCookieHttpOnly(boolean)} set to false.
+    * @return an instance of CookieCsrfTokenRepository with
+    * {@link #setCookieHttpOnly(boolean)} set to false
+    */
+   public static CookieCsrfTokenRepository withHttpOnlyFalse() {
+      CookieCsrfTokenRepository result = new CookieCsrfTokenRepository();
+      result.setCookieHttpOnly(false);
+      return result;
+   }
+
+   private String createNewToken() {
+      return UUID.randomUUID().toString();
+   }
+
+   /**
+    * Set the path that the Cookie will be created with. This will override the default
+    * functionality which uses the request context as the path.
+    * @param path the path to use
+    */
+   public void setCookiePath(String path) {
+      this.cookiePath = path;
+   }
+
+   /**
+    * Get the path that the CSRF cookie will be set to.
+    * @return the path to be used.
+    */
+   public String getCookiePath() {
+      return this.cookiePath;
+   }
+
+   /**
+    * Sets the domain of the cookie that the expected CSRF token is saved to and read
+    * from.
+    * @param cookieDomain the domain of the cookie that the expected CSRF token is saved
+    * to and read from
+    * @since 5.2
+    */
+   public void setCookieDomain(String cookieDomain) {
+      this.cookieDomain = cookieDomain;
+   }
+
+   /**
+    * Sets secure flag of the cookie that the expected CSRF token is saved to and read
+    * from. By default secure flag depends on {@link ServletRequest#isSecure()}
+    * @param secure the secure flag of the cookie that the expected CSRF token is saved
+    * to and read from
+    * @since 5.4
+    */
+   public void setSecure(Boolean secure) {
+      this.secure = secure;
+   }
+
+   /**
+    * Sets maximum age in seconds for the cookie that the expected CSRF token is saved to
+    * and read from. By default maximum age value is -1.
+    *
+    * <p>
+    * A positive value indicates that the cookie will expire after that many seconds have
+    * passed. Note that the value is the <i>maximum</i> age when the cookie will expire,
+    * not the cookie's current age.
+    *
+    * <p>
+    * A negative value means that the cookie is not stored persistently and will be
+    * deleted when the Web browser exits.
+    *
+    * <p>
+    * A zero value causes the cookie to be deleted immediately therefore it is not a
+    * valid value and in that case an {@link IllegalArgumentException} will be thrown.
+    * @param cookieMaxAge an integer specifying the maximum age of the cookie in seconds;
+    * if negative, means the cookie is not stored; if zero, the method throws an
+    * {@link IllegalArgumentException}
+    * @since 5.5
+    */
+   public void setCookieMaxAge(int cookieMaxAge) {
+      Assert.isTrue(cookieMaxAge != 0, "cookieMaxAge cannot be zero");
+      this.cookieMaxAge = cookieMaxAge;
+   }
+
+}
+```
+
+
+
+
+
+2. 请求到来时，从请求中提取 csrfToken，和保存的 csrfToken 做比较，进而判断当 前请求是否合法。主要通过 CsrfFilter 过滤器来完成
+
+
+
+```java
+package org.springframework.security.web.csrf;
+
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.HashSet;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.springframework.core.log.LogMessage;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.codec.Utf8;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.util.UrlUtils;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+/**
+ * <p>
+ * Applies
+ * <a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)" >CSRF</a>
+ * protection using a synchronizer token pattern. Developers are required to ensure that
+ * {@link CsrfFilter} is invoked for any request that allows state to change. Typically
+ * this just means that they should ensure their web application follows proper REST
+ * semantics (i.e. do not change state with the HTTP methods GET, HEAD, TRACE, OPTIONS).
+ * </p>
+ *
+ * <p>
+ * Typically the {@link CsrfTokenRepository} implementation chooses to store the
+ * {@link CsrfToken} in {@link HttpSession} with {@link HttpSessionCsrfTokenRepository}
+ * wrapped by a {@link LazyCsrfTokenRepository}. This is preferred to storing the token in
+ * a cookie which can be modified by a client application.
+ * </p>
+ *
+ * @author Rob Winch
+ * @since 3.2
+ */
+public final class CsrfFilter extends OncePerRequestFilter {
+
+   /**
+    * The default {@link RequestMatcher} that indicates if CSRF protection is required or
+    * not. The default is to ignore GET, HEAD, TRACE, OPTIONS and process all other
+    * requests.
+    */
+   public static final RequestMatcher DEFAULT_CSRF_MATCHER = new DefaultRequiresCsrfMatcher();
+
+   /**
+    * The attribute name to use when marking a given request as one that should not be
+    * filtered.
+    *
+    * To use, set the attribute on your {@link HttpServletRequest}: <pre>
+    *     CsrfFilter.skipRequest(request);
+    * </pre>
+    */
+   private static final String SHOULD_NOT_FILTER = "SHOULD_NOT_FILTER" + CsrfFilter.class.getName();
+
+   private final Log logger = LogFactory.getLog(getClass());
+
+   private final CsrfTokenRepository tokenRepository;
+
+   private RequestMatcher requireCsrfProtectionMatcher = DEFAULT_CSRF_MATCHER;
+
+   private AccessDeniedHandler accessDeniedHandler = new AccessDeniedHandlerImpl();
+
+   public CsrfFilter(CsrfTokenRepository csrfTokenRepository) {
+      Assert.notNull(csrfTokenRepository, "csrfTokenRepository cannot be null");
+      this.tokenRepository = csrfTokenRepository;
+   }
+
+   @Override
+   protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+      return Boolean.TRUE.equals(request.getAttribute(SHOULD_NOT_FILTER));
+   }
+
+   @Override
+   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+         throws ServletException, IOException {
+      request.setAttribute(HttpServletResponse.class.getName(), response);
+      CsrfToken csrfToken = this.tokenRepository.loadToken(request);
+      boolean missingToken = (csrfToken == null);
+      if (missingToken) {
+         csrfToken = this.tokenRepository.generateToken(request);
+         this.tokenRepository.saveToken(csrfToken, request, response);
+      }
+      request.setAttribute(CsrfToken.class.getName(), csrfToken);
+      request.setAttribute(csrfToken.getParameterName(), csrfToken);
+      if (!this.requireCsrfProtectionMatcher.matches(request)) {
+         if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Did not protect against CSRF since request did not match "
+                  + this.requireCsrfProtectionMatcher);
+         }
+         filterChain.doFilter(request, response);
+         return;
+      }
+      String actualToken = request.getHeader(csrfToken.getHeaderName());
+      if (actualToken == null) {
+         actualToken = request.getParameter(csrfToken.getParameterName());
+      }
+      if (!equalsConstantTime(csrfToken.getToken(), actualToken)) {
+         this.logger.debug(
+               LogMessage.of(() -> "Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request)));
+         AccessDeniedException exception = (!missingToken) ? new InvalidCsrfTokenException(csrfToken, actualToken)
+               : new MissingCsrfTokenException(actualToken);
+         this.accessDeniedHandler.handle(request, response, exception);
+         return;
+      }
+      filterChain.doFilter(request, response);
+   }
+
+   public static void skipRequest(HttpServletRequest request) {
+      request.setAttribute(SHOULD_NOT_FILTER, Boolean.TRUE);
+   }
+
+   /**
+    * Specifies a {@link RequestMatcher} that is used to determine if CSRF protection
+    * should be applied. If the {@link RequestMatcher} returns true for a given request,
+    * then CSRF protection is applied.
+    *
+    * <p>
+    * The default is to apply CSRF protection for any HTTP method other than GET, HEAD,
+    * TRACE, OPTIONS.
+    * </p>
+    * @param requireCsrfProtectionMatcher the {@link RequestMatcher} used to determine if
+    * CSRF protection should be applied.
+    */
+   public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
+      Assert.notNull(requireCsrfProtectionMatcher, "requireCsrfProtectionMatcher cannot be null");
+      this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
+   }
+
+   /**
+    * Specifies a {@link AccessDeniedHandler} that should be used when CSRF protection
+    * fails.
+    *
+    * <p>
+    * The default is to use AccessDeniedHandlerImpl with no arguments.
+    * </p>
+    * @param accessDeniedHandler the {@link AccessDeniedHandler} to use
+    */
+   public void setAccessDeniedHandler(AccessDeniedHandler accessDeniedHandler) {
+      Assert.notNull(accessDeniedHandler, "accessDeniedHandler cannot be null");
+      this.accessDeniedHandler = accessDeniedHandler;
+   }
+
+   /**
+    * Constant time comparison to prevent against timing attacks.
+    * @param expected
+    * @param actual
+    * @return
+    */
+   private static boolean equalsConstantTime(String expected, String actual) {
+      if (expected == actual) {
+         return true;
+      }
+      if (expected == null || actual == null) {
+         return false;
+      }
+      // Encode after ensure that the string is not null
+      byte[] expectedBytes = Utf8.encode(expected);
+      byte[] actualBytes = Utf8.encode(actual);
+      return MessageDigest.isEqual(expectedBytes, actualBytes);
+   }
+
+   private static final class DefaultRequiresCsrfMatcher implements RequestMatcher {
+
+      private final HashSet<String> allowedMethods = new HashSet<>(Arrays.asList("GET", "HEAD", "TRACE", "OPTIONS"));
+
+      @Override
+      public boolean matches(HttpServletRequest request) {
+         return !this.allowedMethods.contains(request.getMethod());
+      }
+
+      @Override
+      public String toString() {
+         return "CsrfNotRequired " + this.allowedMethods;
+      }
+
+   }
+
+}
+```
+
+
+
+
+
+## 实现
+
+
+
+### 导入模板引擎依赖
+
+```xml
+ <!--模板引擎thymeleaf-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!--对Thymeleaf添加Spring Security标签支持-->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+        </dependency>
+```
+
