@@ -11547,6 +11547,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
 
 
 
+## 项目地址
+
+
+
+https://github.com/maomao124/springSecurity_demo.git
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11555,5 +11569,36 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
 
 
 
+## 认证授权过程分析
 
+* 如果是基于 Session，那么 Spring-security 会对 cookie 里的 sessionid 进行解析，找到服务器存储的 session 信息，然后判断当前用户是否符合请求的要求
+* 如果是基于 token，则是解析出 token，然后将当前请求加入到 Spring-security 管理的权限信息中去
+
+
+
+如果系统的模块众多，每个模块都需要进行授权与认证，所以我们选择基于 token 的形式 进行授权与认证，用户根据用户名密码认证成功，然后获取当前用户角色的一系列权限 值，并以用户名为 key，权限列表为 value 的形式存入 redis 缓存中，根据用户名相关信息生成 token 返回，浏览器将 token 记录到 cookie 中，每次调用 api 接口都默认将 token 携带 到 header 请求头中，Spring-security 解析 header 头获取 token 信息，解析 token 获取当前 用户名，根据用户名就可以从 redis 中获取权限列表，这样 Spring-security 就能够判断当前请求是否有权限访问
+
+
+
+![image-20220803215431252](img/SpringSecurity学习笔记/image-20220803215431252.png)
+
+
+
+
+
+
+
+
+
+## 权限管理数据模型
+
+
+
+![image-20220803215801673](img/SpringSecurity学习笔记/image-20220803215801673.png)
+
+
+
+
+
+##  jwt
 
