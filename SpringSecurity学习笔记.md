@@ -13094,3 +13094,789 @@ mysql>
 
 
 
+
+
+#### TokenSecurityConfig
+
+```java
+package mao.spring_security.config;
+
+import mao.spring_security.filter.TokenAuthFilter;
+import mao.spring_security.filter.TokenLoginFilter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import mao.spring_security.security.TokenLogoutHandler;
+import mao.spring_security.security.TokenManager;
+import mao.spring_security.security.UnAuthEntryPoint;
+
+import javax.annotation.PostConstruct;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.config
+ * Class(类名): TokenSecurityConfig
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/4
+ * Time(创建时间)： 23:12
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Configuration
+@Slf4j
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class TokenSecurityConfig extends WebSecurityConfigurerAdapter
+{
+    private final TokenManager tokenManager;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final PasswordEncoder passwordEncoder;
+    private final UserDetailsService userDetailsService;
+
+    @Autowired
+    public TokenSecurityConfig(TokenManager tokenManager, StringRedisTemplate stringRedisTemplate,
+                               PasswordEncoder passwordEncoder, UserDetailsService userDetailsService)
+    {
+        this.tokenManager = tokenManager;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.passwordEncoder = passwordEncoder;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception
+    {
+        //配置异常处理
+        http.exceptionHandling()
+                //没有权限访问的异常处理器
+                .authenticationEntryPoint(new UnAuthEntryPoint());
+
+
+        //csrf设置
+        http.csrf().disable();
+
+        //认证配置
+        http.authorizeRequests()
+                .anyRequest().authenticated()
+                //设置退出路径
+                .and().logout().logoutUrl("/admin/acl/index/logout")
+                //设置退出登录的处理器
+                .addLogoutHandler(new TokenLogoutHandler(tokenManager, stringRedisTemplate))
+                .and()
+                //设置过滤器
+                .addFilter(new TokenLoginFilter(tokenManager, stringRedisTemplate, authenticationManager()))
+                .addFilter(new TokenAuthFilter(authenticationManager(), tokenManager, stringRedisTemplate))
+                .httpBasic();
+    }
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception
+    {
+        //设置userDetailsService和passwordEncoder
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+    }
+
+    @Override
+    public void configure(WebSecurity web) throws Exception
+    {
+        //设置不进行认证的路径，可以直接访问
+        web.ignoring().antMatchers("/api/**", "/test1");
+    }
+
+
+    @PostConstruct
+    public void init()
+    {
+        log.debug("加载TokenSecurityConfig");
+    }
+
+}
+```
+
+
+
+
+
+
+
+#### SecurityUser
+
+```java
+package mao.spring_security.entity;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.entity
+ * Class(类名): SecurityUser
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/4
+ * Time(创建时间)： 23:03
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+
+public class SecurityUser implements UserDetails
+{
+
+    //当前登录用户
+    private transient User currentUserInfo;
+
+    //当前权限列表
+    private List<String> permissionValueList;
+
+    /**
+     * Instantiates a new Security user.
+     */
+    public SecurityUser()
+    {
+
+    }
+
+    /**
+     * Instantiates a new Security user.
+     *
+     * @param user the user
+     */
+    public SecurityUser(User user)
+    {
+        if (user != null)
+        {
+            this.currentUserInfo = user;
+        }
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities()
+    {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for (String permissionValue : permissionValueList)
+        {
+            //判断是否为空
+            if (StringUtils.isEmpty(permissionValue))
+            {
+                continue;
+            }
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority(permissionValue);
+            authorities.add(authority);
+        }
+        return authorities;
+    }
+
+    @Override
+    public String getPassword()
+    {
+        return currentUserInfo.getPassword();
+    }
+
+    @Override
+    public String getUsername()
+    {
+        return currentUserInfo.getUsername();
+    }
+
+    @Override
+    public boolean isAccountNonExpired()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled()
+    {
+        return true;
+    }
+
+    /**
+     * Gets current user info.
+     *
+     * @return the current user info
+     */
+    public User getCurrentUserInfo()
+    {
+        return currentUserInfo;
+    }
+
+    /**
+     * Sets current user info.
+     *
+     * @param currentUserInfo the current user info
+     */
+    public void setCurrentUserInfo(User currentUserInfo)
+    {
+        this.currentUserInfo = currentUserInfo;
+    }
+
+    /**
+     * Gets permission value list.
+     *
+     * @return the permission value list
+     */
+    public List<String> getPermissionValueList()
+    {
+        return permissionValueList;
+    }
+
+    /**
+     * Sets permission value list.
+     *
+     * @param permissionValueList the permission value list
+     */
+    public void setPermissionValueList(List<String> permissionValueList)
+    {
+        this.permissionValueList = permissionValueList;
+    }
+}
+```
+
+
+
+
+
+
+
+#### TokenAuthFilter
+
+```java
+package mao.spring_security.filter;
+
+import com.alibaba.fastjson.JSON;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import mao.spring_security.security.TokenManager;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.filter
+ * Class(类名): TokenAuthFilter
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/5
+ * Time(创建时间)： 20:37
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Slf4j
+public class TokenAuthFilter extends BasicAuthenticationFilter
+{
+    private final TokenManager tokenManager;
+    private final StringRedisTemplate stringRedisTemplate;
+
+
+    public TokenAuthFilter(AuthenticationManager authenticationManager, TokenManager tokenManager, StringRedisTemplate stringRedisTemplate)
+    {
+        super(authenticationManager);
+        this.tokenManager = tokenManager;
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws IOException, ServletException
+    {
+        log.debug("开始执行TokenAuthFilter过滤器的doFilterInternal方法");
+        //获取当前认证成功用户权限信息
+        UsernamePasswordAuthenticationToken authentication = this.getAuthentication(request);
+        //判断如果有权限信息，放到权限上下文中
+        if (authentication != null)
+        {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        chain.doFilter(request, response);
+    }
+
+    /**
+     * 从request里获取用户的信息
+     *
+     * @param request HttpServletRequest
+     * @return UsernamePasswordAuthenticationToken
+     */
+    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request)
+    {
+        log.debug("获取token");
+        //从请求头里获取token
+        String token = request.getHeader("token");
+        if (token != null)
+        {
+            //从请求头里获取用户名
+            String userInfoFromToken = tokenManager.getUserInfoFromToken(token);
+            //从redis里获取权限列表
+            String json = stringRedisTemplate.opsForValue().get("mao.spring_security.security:user:" + userInfoFromToken);
+            if (json == null)
+            {
+                return null;
+            }
+            List<String> permissionValueList = JSON.parseArray(json, String.class);
+            if (permissionValueList == null)
+            {
+                permissionValueList = new ArrayList<>();
+            }
+            log.debug("用户为" + userInfoFromToken + "权限列表为：" + permissionValueList);
+            Collection<GrantedAuthority> authority = new ArrayList<>();
+            for (String permissionValue : permissionValueList)
+            {
+                SimpleGrantedAuthority auth = new SimpleGrantedAuthority(permissionValue);
+                authority.add(auth);
+            }
+            return new UsernamePasswordAuthenticationToken(userInfoFromToken, token, authority);
+        }
+        return null;
+    }
+}
+```
+
+
+
+
+
+
+
+#### TokenLoginFilter
+
+```java
+package mao.spring_security.filter;
+
+import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import mao.spring_security.entity.SecurityUser;
+import mao.spring_security.entity.User;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import mao.spring_security.security.TokenManager;
+import utils.ResponseUtil;
+import utils.Result;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.filter
+ * Class(类名): TokenLoginFilter
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/5
+ * Time(创建时间)： 20:06
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Slf4j
+public class TokenLoginFilter extends UsernamePasswordAuthenticationFilter
+{
+    private final TokenManager tokenManager;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final AuthenticationManager authenticationManager;
+
+
+    public TokenLoginFilter(TokenManager tokenManager, StringRedisTemplate stringRedisTemplate, AuthenticationManager authenticationManager)
+    {
+        this.tokenManager = tokenManager;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.authenticationManager = authenticationManager;
+    }
+
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException
+    {
+        log.debug("开始获取表单提交的用户名和密码");
+        //获取表单提交的用户名和密码
+        try
+        {
+            User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
+            return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+            //return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken("admin", "123"));
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
+            throws IOException, ServletException
+    {
+        log.debug("认证成功，调用TokenLoginFilter的successfulAuthentication方法");
+        //认证成功调用该方法
+        //获取用户信息
+        SecurityUser user = (SecurityUser) authResult.getPrincipal();
+        //根据用户名生成token
+        String token = tokenManager.createToken(user.getCurrentUserInfo().getUsername());
+        //把用户名称和用户权限列表放到redis
+        String json = JSON.toJSONString(user.getPermissionValueList());
+        stringRedisTemplate.opsForValue().set("mao.spring_security.security:user:" + user.getCurrentUserInfo().getUsername(), json);
+        log.debug("将权限列表放入redis：" + json);
+        //返回token
+        log.debug("返回token：\n" + token + "\n");
+        ResponseUtil.out(response, Result.ok().data("token", token));
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
+            throws IOException, ServletException
+    {
+        log.debug("认证失败");
+        //返回失败
+        ResponseUtil.out(response, Result.error().message("认证失败"));
+    }
+}
+```
+
+
+
+
+
+#### MD5PasswordEncoder
+
+```java
+package mao.spring_security.security;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import utils.sha.MD5;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.security
+ * Class(类名): MD5PasswordEncoder
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/4
+ * Time(创建时间)： 23:19
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Component
+public class MD5PasswordEncoder implements PasswordEncoder
+{
+    @Override
+    public String encode(CharSequence charSequence)
+    {
+        return MD5.getMD5(charSequence.toString());
+    }
+
+    @Override
+    public boolean matches(CharSequence charSequence, String s)
+    {
+        return s.equals(MD5.getMD5(charSequence.toString()));
+    }
+}
+```
+
+
+
+
+
+
+
+#### TokenLogoutHandler
+
+```java
+package mao.spring_security.security;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import utils.ResponseUtil;
+import utils.Result;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.security
+ * Class(类名): TokenLogoutHandler
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/5
+ * Time(创建时间)： 19:57
+ * Version(版本): 1.0
+ * Description(描述)： 退出处理器
+ */
+
+@Slf4j
+public class TokenLogoutHandler implements LogoutHandler
+{
+    private final TokenManager tokenManager;
+    private final StringRedisTemplate stringRedisTemplate;
+
+
+    /**
+     * Instantiates a new Token logout handler.
+     *
+     * @param tokenManager        the token manager
+     * @param stringRedisTemplate the string redis template
+     */
+    public TokenLogoutHandler(TokenManager tokenManager, StringRedisTemplate stringRedisTemplate)
+    {
+        this.tokenManager = tokenManager;
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
+
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+    {
+        String token = request.getHeader("token");
+        if (token != null)
+        {
+            tokenManager.removeToken(token);
+            String userInfoFromToken = tokenManager.getUserInfoFromToken(token);
+            stringRedisTemplate.delete("mao.spring_security.security:user:" + userInfoFromToken);
+            log.debug("用户" + userInfoFromToken + "退出登录");
+        }
+        ResponseUtil.out(response, Result.ok().message("退出成功"));
+    }
+}
+```
+
+
+
+
+
+
+
+#### TokenManager
+
+```java
+package mao.spring_security.security;
+
+import io.jsonwebtoken.CompressionCodecs;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.security
+ * Class(类名): TokenManager
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/4
+ * Time(创建时间)： 23:27
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@Component
+public class TokenManager
+{
+    //token有效时长，单位为毫秒
+    private final long tokenEffectiveTime = 24 * 60 * 60 * 1000;
+    //编码秘钥
+    private final String tokenSignKey = "123456";
+
+    /**
+     * 使用jwt根据用户名生成token
+     *
+     * @param username 用户名
+     * @return token
+     */
+    public String createToken(String username)
+    {
+        String token = Jwts.builder().setSubject(username)
+                //设置过期时间
+                .setExpiration(new Date(System.currentTimeMillis() + tokenEffectiveTime))
+                //设置JWA算法和编码秘钥
+                .signWith(SignatureAlgorithm.HS512, tokenSignKey)
+                //设置压缩算法的编解码器
+                .compressWith(CompressionCodecs.GZIP)
+                .compact();
+        return token;
+    }
+
+    /**
+     * 根据token字符串得到用户信息
+     *
+     * @param token token
+     * @return userinfo
+     */
+    public String getUserInfoFromToken(String token)
+    {
+        String userInfo = Jwts.parser()
+                .setSigningKey(tokenSignKey)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+        return userInfo;
+    }
+
+    /**
+     * 删除token
+     *
+     * @param token token
+     */
+    public void removeToken(String token)
+    {
+
+    }
+
+
+}
+```
+
+
+
+
+
+#### UnAuthEntryPoint
+
+```java
+package mao.spring_security.security;
+
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import utils.ResponseUtil;
+import utils.Result;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * Project name(项目名称)：spring_cloud_security
+ * Package(包名): mao.spring_security.security
+ * Class(类名): UnAuthEntryPoint
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/8/4
+ * Time(创建时间)： 23:24
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+public class UnAuthEntryPoint implements AuthenticationEntryPoint
+{
+
+    @Override
+    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e)
+            throws IOException, ServletException
+    {
+        ResponseUtil.out(httpServletResponse, Result.error().message(e.getMessage()));
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 项目地址
+
+
+
+### 后端
+
+https://github.com/maomao124/spring_cloud_security.git
+
+
+
+### 前端
+
+https://github.com/maomao124/springsecurity-admin.git
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+end
+
+---
+
+by mao
+
+2022  08  08
+
+---
+
